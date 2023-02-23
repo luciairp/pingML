@@ -27,44 +27,7 @@ Buscamos generar una tabla que tenga la frecuencia de cada tipo de nido a cada d
 
 Corregimos errores históricos:
 
-2015:
-estaca 3, nido 1 mata a 114: eliminado
-estaca 17, nido 1 mata a 105 m: eliminado
-estaca 17, nido 1 cueva a 147 m: eliminado
-estaca 24, nido 1 mata a 1011 m: eliminado
-estaca 30, nido 1 mata a 1316 m: eliminado
-estaca 31, nido 1 mata a 106 m: eliminado
-estaca 32, nido 1 mata sin distancia: eliminado
-5 filas con nidos mata a 19, 18 x 2, y 16 x 2 m sin referencia a estaca: eliminadas
-
-
-```{r data 2015}
-library(tidyverse)
-data <- read_csv("2015.csv", 
-                 col_types = cols(
-                   tipo = col_factor(levels=c("M","C")),
-                   estaca = col_factor()
-                   )
-                 )
-
-res <- data %>% 
-  group_by(estaca,distancia, tipo) %>% 
-   summarise(
-    n = n()
-  )
-
-res2 <- res %>% 
-  pivot_wider(names_from = tipo, values_from = n, values_fill=0) %>% 
-  mutate(
-    size = M + C
-  ) %>% 
-  select(estaca, size, distancia, M, C)
-
-write_csv2(res2, "ping2015.csv")
-
-```
-
-2016: 
+2015: 
 Tiene las mismas estacas con los mismos nidos y errores de metros que en 2015. Raro. 
 estaca 3, nido 1 mata a 114: eliminado
 estaca 17, nido 1 mata a 105: eliminado
@@ -74,8 +37,8 @@ estaca 30, nido 1 mata a 1316: eliminado
 estaca 31, nido 1 mata a 106: eliminado
 1 fila con nido mata en estaca 32 sin referencia a distancia: eliminada
 
-```{r data 2016}
-data <- read_csv("2016.csv", 
+```{r data 2015}
+data <- read_csv("2015.csv", 
                  col_types = cols(
                    tipo = col_factor(levels=c("M","C")),
                    estaca = col_factor()
@@ -95,13 +58,13 @@ res2 <- res %>%
   ) %>% 
   select(estaca, Area, Esfuerzo, size, distancia, M, C)
 
-write_csv2(res2, "ping2016.csv")
+write_csv2(res2, "ping2015.csv")
 
 ```
 
-2017:
-```{r data 2017}
-data <- read_csv2("2017.csv", 
+2016:
+```{r data 2016}
+data <- read_csv2("2016.csv", 
                  col_types = cols(
                    tipo = col_factor(levels=c("m","c")),
                    estaca = col_factor()
@@ -123,6 +86,6 @@ res2 <- res %>%
   ) %>% 
   select(estaca, Area, Esfuerzo, size, distancia, m, c)
 
-write_csv2(res2, "ping2017.csv")
+write_csv2(res2, "ping2016.csv")
 ```
 
