@@ -50,13 +50,12 @@ estaca 31, nido 1 mata a 106: eliminado
 
 ```{r}
 library(tidyverse)
-data <- read_csv2("ping2016.csv", 
+data <- read_csv("2016.csv", 
                  col_types = cols(
                    tipo = col_factor(levels=c("M","C")),
                    estaca = col_factor()
                    )
                  )
-
 
 res <- data %>% 
   group_by(Area,Esfuerzo,estaca,distancia, tipo) %>% 
