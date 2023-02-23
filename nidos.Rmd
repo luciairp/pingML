@@ -1,0 +1,66 @@
+---
+title: "nidos"
+output: html_document
+date: "2023-02-16"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Orden información previa
+Acomodamos información digitalizada a un formato única, para elaborar base de datos con información de estacas y de recuento de nidos en colonia para período 2015-actualidad.
+
+### Datos 2015-2019
+
+Cargamos tablas en .csv que vienen de datos usados para distance de 2015 a 2019
+La estructura es 
+Lugar: MonteLeon siempre
+Area: valor fijo (a confirmar, dice 35 por 35 ha pero hay que actualizar con perímetros)
+estaca: número 1 a 44
+Esfuerzo: cuántas veces se hace le recuento en la estaca, 1 vez
+tipo: si mata o cueva, a veces C y M, a veces minúscula
+distancia: a la que se registra cada nido
+
+Las filas son registros de nidos individuales.
+Buscamos generar una tabla que tenga la frecuencia de cada tipo de nido a cada distancia, y donde se expliciten los 0s.
+
+Corregimos errores históricos:
+2015:
+estaca 3, nido 1 mata a 114: eliminado
+estaca 17, nido 1 mata a 105 m: eliminado
+estaca 17, nido 1 cueva a 147 m: eliminado
+estaca 24, nido 1 mata a 1011 m: eliminado
+estaca 30, nido 1 mata a 1316 m: eliminado
+estaca 31, nido 1 mata a 106 m: eliminado
+estaca 32, nido 1 mata sin distancia: eliminado
+5 filas con nidos mata a 19, 18 x 2, y 16 x 2 m sin referencia a estaca: eliminadas
+
+
+```{r}
+library(tidyverse)
+data <- read_csv("2015.csv",
+                 col_types = cols(
+                   tipo = col_factor(levels=c("M","C")),
+                   estaca = col_factor()
+                   )
+                 )
+
+res <- data %>% 
+  group_by(estaca,distancia, tipo) %>% 
+   summarise(
+    n = n()
+  )
+
+res2 <- res %>% 
+  pivot_wider(names_from = tipo, values_from = n, values_fill=0) %>% 
+  mutate(
+    size = M + C
+  ) %>% 
+  select(estaca, size, distancia, M, C)
+
+write_csv2(res2, "ping2015.csv")
+                   
+```
+
+
