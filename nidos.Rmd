@@ -26,6 +26,7 @@ Las filas son registros de nidos individuales.
 Buscamos generar una tabla que tenga la frecuencia de cada tipo de nido a cada distancia, y donde se expliciten los 0s.
 
 Corregimos errores históricos:
+
 2015:
 estaca 3, nido 1 mata a 114: eliminado
 estaca 17, nido 1 mata a 105 m: eliminado
@@ -36,18 +37,29 @@ estaca 31, nido 1 mata a 106 m: eliminado
 estaca 32, nido 1 mata sin distancia: eliminado
 5 filas con nidos mata a 19, 18 x 2, y 16 x 2 m sin referencia a estaca: eliminadas
 
+2016: 
+Tiene las mismas estacas con los mismos nidos y errores de metros que en 2015. Raro. 
+estaca 3, nido 1 mata a 114: eliminado
+estaca 17, nido 1 mata a 105: eliminado
+estaca 17, nido 1 cueva a 147: eliminado
+estaca 24, nido 1 mata a 1011: eliminado
+estaca 30, nido 1 mata a 1316: eliminado
+estaca 31, nido 1 mata a 106: eliminado
+1 fila con nido mata en estaca 32 sin referencia a distancia: eliminada
+
 
 ```{r}
 library(tidyverse)
-data <- read_csv("2015.csv",
+data <- read_csv2("ping2016.csv", 
                  col_types = cols(
                    tipo = col_factor(levels=c("M","C")),
                    estaca = col_factor()
                    )
                  )
 
+
 res <- data %>% 
-  group_by(estaca,distancia, tipo) %>% 
+  group_by(Area,Esfuerzo,estaca,distancia, tipo) %>% 
    summarise(
     n = n()
   )
@@ -57,9 +69,11 @@ res2 <- res %>%
   mutate(
     size = M + C
   ) %>% 
-  select(estaca, size, distancia, M, C)
+  select(estaca, Area, Esfuerzo, size, distancia, M, C)
 
-write_csv2(res2, "ping2015.csv")
+write_csv2(res2, "ping2016.csv")
+
+
                    
 ```
 
