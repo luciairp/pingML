@@ -8,6 +8,13 @@ date: "2023-02-16"
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+## library --
+library(tidyverse)
+library(readxl)
+library(readr)
+library(writexl)
+
+
 ## Orden información previa
 Acomodamos información digitalizada a un formato única, para elaborar base de datos con información de estacas y de recuento de nidos en colonia para período 2015-actualidad.
 
@@ -89,3 +96,78 @@ res2 <- res %>%
 write_csv2(res2, "ping2016.csv")
 ```
 
+2017
+```{r data 2017}
+
+data <- read_csv2("2017.csv", 
+                 col_types = cols(
+                   tipo = col_factor(levels=c("m","c")),
+                   estaca = col_factor()
+                   )
+                 ) %>%
+  mutate(Esfuerzo = Esfuezo) %>% 
+  select(-Esfuezo)
+
+res <- data %>% 
+  group_by(Area,Esfuerzo,estaca,distancia, tipo) %>% 
+   summarise(
+    n = n()
+  )
+
+res2 <- res %>% 
+  pivot_wider(names_from = tipo, values_from = n, values_fill=0) %>% 
+  mutate(
+    size = m + c
+  ) %>% 
+  select(estaca, Area, Esfuerzo, size, distancia, m, c)
+
+write_csv2(res2, "ping2017.csv")
+```
+2018
+```{r data 2018}
+
+data <- read_csv2("2018.csv", 
+                 col_types = cols(
+                   tipo = col_factor(levels=c("m","c")),
+                   estaca = col_factor()
+                   )
+                 )
+res <- data %>% 
+  group_by(Area,Esfuerzo,estaca,distancia, tipo) %>% 
+   summarise(
+    n = n()
+  )
+
+res2 <- res %>% 
+  pivot_wider(names_from = tipo, values_from = n, values_fill=0) %>% 
+  mutate(
+    size = m + c
+  ) %>% 
+  select(estaca, Area, Esfuerzo, size, distancia, m, c)
+
+write_csv2(res2, "ping2018.csv")
+```
+
+2019
+```{r data 2019}
+data <- read_csv2("2019.csv", 
+                 col_types = cols(
+                   tipo = col_factor(levels=c("m","c")),
+                   estaca = col_factor()
+                   )
+                 )
+res <- data %>% 
+  group_by(Area,Esfuerzo,estaca,distancia, tipo) %>% 
+   summarise(
+    n = n()
+  )
+
+res2 <- res %>% 
+  pivot_wider(names_from = tipo, values_from = n, values_fill=0) %>% 
+  mutate(
+    size = m + c
+  ) %>% 
+  select(estaca, Area, Esfuerzo, size, distancia, m, c)
+
+write_csv2(res2, "ping2019.csv")
+```
