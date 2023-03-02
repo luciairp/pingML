@@ -45,7 +45,7 @@ estaca 31, nido 1 mata a 106: eliminado
 1 fila con nido mata en estaca 32 sin referencia a distancia: eliminada
 
 ```{r data 2015}
-data <- read_csv("2015.csv", 
+data <- read_csv2("2015.csv", 
                  col_types = cols(
                    tipo = col_factor(levels=c("M","C")),
                    estaca = col_factor()
@@ -170,4 +170,10 @@ res2 <- res %>%
   select(estaca, Area, Esfuerzo, size, distancia, m, c)
 
 write_csv2(res2, "ping2019.csv")
+```
+
+Carga de base de datos 2015-2021
+```{r data 2015-2021}
+data <- read_csv("pinguinos15-21.csv",  )
+               
 ```
