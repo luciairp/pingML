@@ -1,0 +1,56 @@
+---
+title: "distance-nidos"
+output: html_document
+date: "2023-03-09"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Estimación de densidad de nidos con métodos de distancia
+
+```{r}
+library(tidyverse)
+library(Distance)
+```
+
+Trabajaremos sobre el objeto que generamos en etapa anterior:
+```{r}
+data <- read_csv("pinguinos15-21.csv", col_types = cols(
+   estaca = col_factor()
+)  )
+```
+Lo primero que tengo que hacer es arreglar el tema de los grupos, ya que el size se refiere a la cuenta de lo que se vio, y no al grupo en sí. Entonces necesito llevar cada observación a una fila, y mantener la información de mata o cueva en cada una...
+Eso es con pivot_longer
+
+```{r}
+datos_ord <- data %>% 
+  pivot_longer(cols = c('mata', 'cueva'), names_to = "tipo_nido", values_to = "obs") %>% 
+  filter(obs > 0) %>% 
+  uncount(weights = obs) %>% 
+  select(estaca, area, esfuerzo, distancia, año, tipo_nido) %>% 
+  rename(distance = distancia,
+         size = esfuerzo,
+         Sample.Label = estaca) %>% 
+  mutate(Region.Label = "coloniaML",
+         Effort = 1,
+         Area = 350000)
+
+```
+
+
+Para la estimación se va a usar la función uniforme, porque se asume que existe la misma pb de detectar los nidos independientemente de la distancia.
+```{r}
+#cutpoints, medimos siempre al metro superior
+cp <- c(0:20)
+
+# unidades: distancia - esfuerzo - area
+#conversion.factor <- convert_units("Meter", "Kilometer", "Hectare") NO ANDA
+  
+
+y2015 <- ds(datos_ord %>% filter(año == '2015'),transect = "point", key = "unif", cutpoints = cp)
+
+
+```
+
