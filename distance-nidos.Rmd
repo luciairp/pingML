@@ -29,19 +29,36 @@ datos_ord <- data %>%
   pivot_longer(cols = c('mata', 'cueva'), names_to = "tipo_nido", values_to = "obs") %>% 
   filter(obs > 0) %>% 
   uncount(weights = obs) %>% 
-  select(estaca, area, esfuerzo, distancia, año, tipo_nido) %>% 
+  select(estaca, esfuerzo, distancia, año, tipo_nido) %>% 
   rename(distance = distancia,
          size = esfuerzo,
          Sample.Label = estaca) %>% 
   mutate(Region.Label = "coloniaML",
          Effort = 1,
-         Area = 350000)
+         Area = 350000) %>% 
+  add_row(Sample.Label = "42", size = 0, distance = 25, año = 2019, tipo_nido = NA, Region.Label = "coloniaML", Effort = 1, Area = 350000) %>% 
+  add_row(Sample.Label = "42", size = 0, distance = 25, año = 2021, tipo_nido = NA, Region.Label = "coloniaML", Effort = 1, Area = 350000) %>% 
+  add_row(Sample.Label = "1", size = 0, distance = 25, año = 2021, tipo_nido = NA, Region.Label = "coloniaML", Effort = 1, Area = 350000) %>% 
+  mutate(
+    Sample.Label = as.factor(Sample.Label),
+    año = as.factor(año)
+         )
+  
+# agreganos manualmente las filas de las estacas que tuvieron 0 registros
+# con funcion add_row: 1 en 2019 y 2 en 2021
+
+tabla_res <- datos_ord %>% 
+  group_by(año, Sample.Label) %>% 
+  summarise(
+    n = n()
+  )
 
 ```
 
 
-Para la estimación se va a usar la función uniforme, porque se asume que existe la misma pb de detectar los nidos independientemente de la distancia.
+Para la estimación se va a usar la función uniforme, porque se asume que existe la misma pb de detectar los nidos independientemente de la distancia. Probamos con 2015:
 ```{r}
+
 #cutpoints, medimos siempre al metro superior
 cp <- c(0:20)
 
@@ -51,6 +68,64 @@ cp <- c(0:20)
 
 y2015 <- ds(datos_ord %>% filter(año == '2015'),transect = "point", key = "unif", cutpoints = cp)
 
+
+```
+
+Funciones para sacar datos de los modelos
+```{r}
+extract_model_data_table <- function(model){
+  # extrae elementos elegidos del ajuste del modelo y arma una tabla
+  out <- as_tibble(matrix(0, nrow = 1, ncol = 14))
+  colnames(out) <-c("estacas","nidos","Area total","N est","se N", "ICinf N", "ICsup N",
+                    "df N", "D est", "se D", "ICinf D", "ICsup D", "df D","AIC")
+  out[[1]] <- summary(model)$dht$individuals$summary$k
+  out[[2]] <- summary(model)$dht$individuals$summary$n
+  out[[3]] <- summary(model)$dht$individuals$summary$Area
+  out[[4]] <- summary(model)$dht$individuals$N$Estimate
+    out[[5]] <- summary(model)$dht$individuals$N$se
+    out[[6]] <- summary(model)$dht$individuals$N$lcl
+    out[[7]] <- summary(model)$dht$individuals$N$ucl
+    out[[8]] <- summary(model)$dht$individuals$N$df
+  out[[9]] <- summary(model)$dht$individuals$D$Estimate
+    out[[10]] <- summary(model)$dht$individuals$D$se
+    out[[11]] <- summary(model)$dht$individuals$D$lcl
+    out[[12]] <- summary(model)$dht$individuals$D$ucl
+    out[[13]] <- summary(model)$dht$individuals$D$df
+    out[[14]] <- model$ddf$criterion
+  return(out)
+}
+
+```
+
+Hacemos estimación para todos los años
+```{r}
+cp <- c(0:20)
+y2015 <- ds(datos_ord %>% filter(año == '2015'),transect = "point", key = "unif", cutpoints = cp)
+y2016 <- ds(datos_ord %>% filter(año == '2016'),transect = "point", key = "unif", cutpoints = cp)
+y2017 <- ds(datos_ord %>% filter(año == '2017'),transect = "point", key = "unif", cutpoints = cp)
+y2018 <- ds(datos_ord %>% filter(año == '2018'),transect = "point", key = "unif", cutpoints = cp)
+y2019 <- ds(datos_ord %>% filter(año == '2019'),transect = "point", key = "unif", cutpoints = cp)
+y2021 <- ds(datos_ord %>% filter(año == '2021'),transect = "point", key = "unif", cutpoints = cp)
+
+
+♥
+```
+```{r}
+serietemp <- list()
+serietemp$A <- y2015
+serietemp$B <- y2016
+serietemp$C <- y2017
+serietemp$D <- y2018
+serietemp$E <- y2019
+serietemp$G <- y2021
+
+res.list <- map(serietemp,extract_model_data_table)
+res.tabla <- res.list[[1]] %>% 
+  add_row(res.list[[2]]) %>% 
+  add_row(res.list[[3]]) %>% 
+  add_row(res.list[[4]]) %>% 
+  add_row(res.list[[5]]) %>% 
+  add_row(res.list[[6]])
 
 ```
 
