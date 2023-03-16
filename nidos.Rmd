@@ -71,7 +71,7 @@ write_csv2(res2, "ping2015.csv")
 
 2016:
 ```{r data 2016}
-data <- read_csv2("2016.csv", 
+data <- read_csv2("Planillas/2016.csv", 
                  col_types = cols(
                    tipo = col_factor(levels=c("m","c")),
                    estaca = col_factor()
@@ -99,14 +99,12 @@ write_csv2(res2, "ping2016.csv")
 2017
 ```{r data 2017}
 
-data <- read_csv2("2017.csv", 
+data <- read_csv2("Planillas/2017.csv", 
                  col_types = cols(
                    tipo = col_factor(levels=c("m","c")),
                    estaca = col_factor()
                    )
-                 ) %>%
-  mutate(Esfuerzo = Esfuezo) %>% 
-  select(-Esfuezo)
+                 )
 
 res <- data %>% 
   group_by(Area,Esfuerzo,estaca,distancia, tipo) %>% 
@@ -126,7 +124,7 @@ write_csv2(res2, "ping2017.csv")
 2018
 ```{r data 2018}
 
-data <- read_csv2("2018.csv", 
+data <- read_csv("Planillas/2018.csv", 
                  col_types = cols(
                    tipo = col_factor(levels=c("m","c")),
                    estaca = col_factor()

@@ -36,7 +36,8 @@ datos_ord <- data %>%
   mutate(Region.Label = "coloniaML",
          Effort = 1,
          Area = 350000) %>% 
-  add_row(Sample.Label = "42", size = 0, distance = 25, año = 2019, tipo_nido = NA, Region.Label = "coloniaML", Effort = 1, Area = 350000) %>% 
+  add_row(Sample.Label = "42", size = 0, distance = 25, año = 2018, tipo_nido = NA, Region.Label = "coloniaML", Effort = 1, Area = 350000) %>% 
+   add_row(Sample.Label = "42", size = 0, distance = 25, año = 2019, tipo_nido = NA, Region.Label = "coloniaML", Effort = 1, Area = 350000) %>% 
   add_row(Sample.Label = "42", size = 0, distance = 25, año = 2021, tipo_nido = NA, Region.Label = "coloniaML", Effort = 1, Area = 350000) %>% 
   add_row(Sample.Label = "1", size = 0, distance = 25, año = 2021, tipo_nido = NA, Region.Label = "coloniaML", Effort = 1, Area = 350000) %>% 
   mutate(
@@ -49,6 +50,11 @@ datos_ord <- data %>%
 
 tabla_res <- datos_ord %>% 
   group_by(año, Sample.Label) %>% 
+  summarise(
+    n = n()
+  )
+tabla_res2 <- datos_ord %>% 
+  group_by(año) %>% 
   summarise(
     n = n()
   )
@@ -76,8 +82,8 @@ Funciones para sacar datos de los modelos
 extract_model_data_table <- function(model){
   # extrae elementos elegidos del ajuste del modelo y arma una tabla
   out <- as_tibble(matrix(0, nrow = 1, ncol = 14))
-  colnames(out) <-c("estacas","nidos","Area total","N est","se N", "ICinf N", "ICsup N",
-                    "df N", "D est", "se D", "ICinf D", "ICsup D", "df D","AIC")
+  colnames(out) <-c("estacas","nidos","Area_tot","N_est","se_N", "ICinf_N", "ICsup_N",
+                    "df_N", "D_est", "se_D", "ICinf_D", "ICsup_D", "df_D","AIC")
   out[[1]] <- summary(model)$dht$individuals$summary$k
   out[[2]] <- summary(model)$dht$individuals$summary$n
   out[[3]] <- summary(model)$dht$individuals$summary$Area
@@ -127,8 +133,33 @@ res.tabla <- res.list[[1]] %>%
   add_row(res.list[[5]]) %>% 
   add_row(res.list[[6]])
 
+res.tabla$Yr <- c("2015","2016","2017","2018","2019","2021")
+res.tabla <- res.tabla %>% select(Yr,estacas,nidos,Area_tot,N_est,se_N,ICinf_N,ICsup_N,
+                    df_N,D_est,se_D,ICinf_D,ICsup_D,df_D,AIC) %>% 
+  mutate(
+    D_estHa = D_est * 10000,
+    ICinf_DHa = ICinf_D * 10000,
+    ICsup_DHa = ICsup_D * 10000
+  )
+write_csv2(res.tabla, "res_estim1521.csv")
+
+```
+
+Miremos las salidas del distance
+```{r}
+map(serietemp, plot)
 ```
 
 
+Hagamos algunos gráficos de la estimación en la serie temporal
+```{r}
+ggplot(res.tabla, aes(x = Yr, y = D_estHa, group = estacas))+
+  scale_y_continuous(limits = c(0,0.25)*10000)+
+  geom_ribbon(aes(ymin = ICinf_DHa, ymax = ICsup_DHa, group = estacas),    # shadowing cnf intervals
+             fill = "steelblue2") + 
+  geom_line(color = "firebrick",
+            size = 1)
 
+
+```
 
