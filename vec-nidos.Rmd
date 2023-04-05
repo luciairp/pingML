@@ -1,0 +1,89 @@
+---
+title: "vec-nidos"
+output: html_document
+date: "2023-04-04"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Estimación de densidad de nidos con métodos de vecino mas cercano
+
+```{r}
+source("http://math.hws.edu/pcqm/pcqm.txt")
+library(tidyverse)
+```
+
+Lo primero que hay que hacer es armar el data frame para pasar de distance a vecino mas cercano. Para eso tenemos que armar un código donde nos tome de cada estaca el registro mas cercano. Generamos una columna de distancia centro para restarlo 0.5 metros a cada registro ya que en la metodologia de campo tomamos la distancia maxima.  Se toman las siguientes consideraciones:
+1. Los registros de distancia = 0 que refieren a las estacas sin nidos activos, los transformamos a valores de distancia igual a 21
+2. Filtrar los registros de distancia = NA que quedaron en la base de datos "data"
+
+Los años y estacas que tienen nidos sin registro y se convierten a distancia 21 son:
+1. Datos 2021, estaca 1
+2. Datos 2021, estaca 42
+3. Datos 2019, estaca 42
+
+El dato que tiene NA:
+1. Año 2016, estaca 9
+
+Trabajaremos sobre el objeto que generamos en etapa anterior:
+```{r} 
+data <- read_csv2("pinguinos15-21.csv", col_types = cols(
+   estaca = col_factor()
+)  )
+```
+
+```{r}
+vecino <- data %>%
+  filter(!is.na(distancia)) %>% 
+  group_by(ano,estaca) %>% 
+  summarise(
+    dist=min(distancia)) %>% 
+    mutate(dist_centro=dist-0.5) %>% 
+  select(ano,estaca,dist_centro) %>% 
+  ungroup()
+  
+```
+```{r}
+vec15 <- vecino %>% filter (ano=="2015") %>% 
+  select(dist_centro)
+
+vec16 <- vecino %>% filter (ano=="2016") %>% 
+  select(dist_centro)
+
+vec17 <- vecino %>% filter (ano=="2017") %>% 
+  select(dist_centro)
+
+vec18 <- vecino %>% filter (ano=="2018") %>% 
+  select(dist_centro)
+
+vec19 <- vecino %>% filter (ano=="2019") %>% 
+  select(dist_centro)
+
+vec21 <- vecino %>% filter (ano=="2021") %>% 
+  select(dist_centro)
+```
+
+Estimacion de densidad con vecino mas cercano
+Truncado a 5 para probar el metodo
+```{r}
+vec15_5 <- vec15
+vec15_5[vec15_5>5]<-NA
+(dens15 <- np.density.est (vec15_5))
+area <- 35
+dens15_total <-  368.5758 * area
+```
+```{r}
+(dens16 <- np.density.est (vec16))
+(dens17 <- np.density.est (vec17))
+(dens18 <- np.density.est (vec18))
+(dens19 <- np.density.est (vec19))
+(dens21 <- np.density.est (vec21))
+```
+
+
+
+
+
+

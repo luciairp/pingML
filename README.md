@@ -18,3 +18,8 @@ Hasta el 10/03 se fixeo:
 1) Perimetro 2016
 
 Alclaración: el track 2022 que está en el drive es de exploracion. Ya se le pidio a Grisel el track que necesitamos. 
+
+Dia 04-04-23
+Trabajamos con la base de datos para vecino mas cercano.
+Se modificaron datos en la base para llevar a 21 metros las estacas que no tenian nidos. 
+Se corrió el script para vecinos mas cercanos para todos los años. Debemos continuar trabajando para solucionar las estimaciones del vecino mas cercano ya que dan bastante distintas a las del distance
