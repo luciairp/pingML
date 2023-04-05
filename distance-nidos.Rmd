@@ -29,21 +29,22 @@ datos_ord <- data %>%
   pivot_longer(cols = c('mata', 'cueva'), names_to = "tipo_nido", values_to = "obs") %>% 
   filter(obs > 0) %>% 
   uncount(weights = obs) %>% 
-  select(estaca, esfuerzo, distancia, año, tipo_nido) %>% 
+  select(estaca, distancia, año, tipo_nido) %>% 
   rename(distance = distancia,
-         size = esfuerzo,
+         #size = esfuerzo, #saco info de size por si complica interpretación por grupos, q no hay
          Sample.Label = estaca) %>% 
   mutate(Region.Label = "coloniaML",
          Effort = 1,
          Area = 350000) %>% 
-  add_row(Sample.Label = "42", size = 0, distance = 25, año = 2018, tipo_nido = NA, Region.Label = "coloniaML", Effort = 1, Area = 350000) %>% 
-   add_row(Sample.Label = "42", size = 0, distance = 25, año = 2019, tipo_nido = NA, Region.Label = "coloniaML", Effort = 1, Area = 350000) %>% 
-  add_row(Sample.Label = "42", size = 0, distance = 25, año = 2021, tipo_nido = NA, Region.Label = "coloniaML", Effort = 1, Area = 350000) %>% 
-  add_row(Sample.Label = "1", size = 0, distance = 25, año = 2021, tipo_nido = NA, Region.Label = "coloniaML", Effort = 1, Area = 350000) %>% 
+  add_row(Sample.Label = "42", distance = NA, año = 2018, tipo_nido = NA, Region.Label = "coloniaML", Effort = 1, Area = 350000) %>% 
+   add_row(Sample.Label = "42", distance = NA, año = 2019, tipo_nido = NA, Region.Label = "coloniaML", Effort = 1, Area = 350000) %>% 
+  add_row(Sample.Label = "42", distance = NA, año = 2021, tipo_nido = NA, Region.Label = "coloniaML", Effort = 1, Area = 350000) %>% 
+  add_row(Sample.Label = "1", distance = NA, año = 2021, tipo_nido = NA, Region.Label = "coloniaML", Effort = 1, Area = 350000) %>% 
   mutate(
     Sample.Label = as.factor(Sample.Label),
     año = as.factor(año)
          )
+#write_csv2(datos_ord, "datos_ord.csv")
   
 # agreganos manualmente las filas de las estacas que tuvieron 0 registros
 # con funcion add_row: 1 en 2019 y 2 en 2021
@@ -106,12 +107,12 @@ extract_model_data_table <- function(model){
 Hacemos estimación para todos los años
 ```{r}
 cp <- c(0:20)
-y2015 <- ds(datos_ord %>% filter(año == '2015'),transect = "point", key = "unif", cutpoints = cp)
-y2016 <- ds(datos_ord %>% filter(año == '2016'),transect = "point", key = "unif", cutpoints = cp)
-y2017 <- ds(datos_ord %>% filter(año == '2017'),transect = "point", key = "unif", cutpoints = cp)
-y2018 <- ds(datos_ord %>% filter(año == '2018'),transect = "point", key = "unif", cutpoints = cp)
-y2019 <- ds(datos_ord %>% filter(año == '2019'),transect = "point", key = "unif", cutpoints = cp)
-y2021 <- ds(datos_ord %>% filter(año == '2021'),transect = "point", key = "unif", cutpoints = cp)
+y2015 <- ds(datos_ord %>% filter(año == '2015'),transect = "point", key = "unif", cutpoints = cp, adjustment=NULL, truncation = 20)
+y2016 <- ds(datos_ord %>% filter(año == '2016'),transect = "point", key = "unif", cutpoints = cp, adjustment=NULL, truncation = 20)
+y2017 <- ds(datos_ord %>% filter(año == '2017'),transect = "point", key = "unif", cutpoints = cp, adjustment=NULL, truncation = 20)
+y2018 <- ds(datos_ord %>% filter(año == '2018'),transect = "point", key = "unif", cutpoints = cp, adjustment=NULL, truncation = 20)
+y2019 <- ds(datos_ord %>% filter(año == '2019'),transect = "point", key = "unif", cutpoints = cp, adjustment=NULL, truncation = 20)
+y2021 <- ds(datos_ord %>% filter(año == '2021'),transect = "point", key = "unif", cutpoints = cp, adjustment=NULL, truncation = 20)
 
 
 ♥
@@ -141,7 +142,7 @@ res.tabla <- res.tabla %>% select(Yr,estacas,nidos,Area_tot,N_est,se_N,ICinf_N,I
     ICinf_DHa = ICinf_D * 10000,
     ICsup_DHa = ICsup_D * 10000
   )
-write_csv2(res.tabla, "res_estim1521.csv")
+#write_csv2(res.tabla, "res_estim1521.csv")
 
 ```
 
@@ -154,12 +155,113 @@ map(serietemp, plot)
 Hagamos algunos gráficos de la estimación en la serie temporal
 ```{r}
 ggplot(res.tabla, aes(x = Yr, y = D_estHa, group = estacas))+
-  scale_y_continuous(limits = c(0,0.25)*10000)+
+  scale_y_continuous(limits = c(0,0.18)*10000)+
   geom_ribbon(aes(ymin = ICinf_DHa, ymax = ICsup_DHa, group = estacas),    # shadowing cnf intervals
-             fill = "steelblue2") + 
+             fill = "steelblue3", alpha = .4) + 
   geom_line(color = "firebrick",
-            size = 1)
+            size = 1)+
+  theme_classic()
 
 
+```
+Es necesario evaluar si el área está bien. Estamos usando el valor de 35 hectáreas para todos los años pero sabemos que ha ido cambiando, al menos la forma de la colonia. Hay que ajustar los valores de cada año, o cada par de años.
+
+Quiero ver qué pasa si se consideran los datos con diferentes valores de truncado (si solo se mide a 10, 15, 18 m).
+```{r}
+
+cp <- c(0:10)
+y2015.10 <- ds(datos_ord %>% filter(año == '2015'),transect = "point", key = "unif", cutpoints = cp, adjustment=NULL, truncation = max(cp))
+y2016.10 <- ds(datos_ord %>% filter(año == '2016'),transect = "point", key = "unif", cutpoints = cp, adjustment=NULL, truncation = max(cp))
+y2017.10 <- ds(datos_ord %>% filter(año == '2017'),transect = "point", key = "unif", cutpoints = cp, adjustment=NULL, truncation = max(cp))
+y2018.10 <- ds(datos_ord %>% filter(año == '2018'),transect = "point", key = "unif", cutpoints = cp, adjustment=NULL, truncation = max(cp))
+y2019.10 <- ds(datos_ord %>% filter(año == '2019'),transect = "point", key = "unif", cutpoints = cp, adjustment=NULL, truncation = max(cp))
+y2021.10 <- ds(datos_ord %>% filter(año == '2021'),transect = "point", key = "unif", cutpoints = cp, adjustment=NULL, truncation = max(cp))
+
+
+```
+
+```{r}
+serietemp.10 <- list()
+serietemp.10$A <- y2015.10
+serietemp.10$B <- y2016.10
+serietemp.10$C <- y2017.10
+serietemp.10$D <- y2018.10
+serietemp.10$E <- y2019.10
+serietemp.10$G <- y2021.10
+
+res.list.10 <- map(serietemp.10,extract_model_data_table)
+res.tabla.10 <- res.tabla %>%
+  add_row(res.list.10[[1]]) %>% 
+  add_row(res.list.10[[2]]) %>% 
+  add_row(res.list.10[[3]]) %>% 
+  add_row(res.list.10[[4]]) %>% 
+  add_row(res.list.10[[5]]) %>% 
+  add_row(res.list.10[[6]])
+
+res.tabla.10$Yr <- c("2015","2016","2017","2018","2019","2021",
+                     "2015.10","2016.10","2017.10","2018.10","2019.10","2021.10")
+res.tabla.10$trunc_dist <- c(rep("a20",6),rep("a10",6))
+res.tabla.10 <- res.tabla.10 %>% select(Yr,trunc_dist,estacas,nidos,Area_tot,N_est,se_N,ICinf_N,ICsup_N,
+                    df_N,D_est,se_D,ICinf_D,ICsup_D,df_D,AIC) %>% 
+  mutate(
+    D_estHa = D_est * 10000,
+    ICinf_DHa = ICinf_D * 10000,
+    ICsup_DHa = ICsup_D * 10000
+  )
+
+ggplot(res.tabla.10, aes(x = Yr, y = D_estHa, group = trunc_dist, col = trunc_dist))+
+  scale_y_continuous(limits = c(0,0.2)*10000)+
+  geom_ribbon(aes(ymin = ICinf_DHa, ymax = ICsup_DHa, group = trunc_dist),    # shadowing cnf intervals
+             fill = "steelblue3", alpha = .4) + 
+  geom_line(color = "firebrick",
+            size = 1)+
+  theme_classic()
+```
+Lo mismo pero a 15 m
+```{r}
+cp <- c(0:15)
+y2015.15 <- ds(datos_ord %>% filter(año == '2015'),transect = "point", key = "unif", cutpoints = cp, adjustment=NULL, truncation = max(cp))
+y2016.15 <- ds(datos_ord %>% filter(año == '2016'),transect = "point", key = "unif", cutpoints = cp, adjustment=NULL, truncation = max(cp))
+y2017.15 <- ds(datos_ord %>% filter(año == '2017'),transect = "point", key = "unif", cutpoints = cp, adjustment=NULL, truncation = max(cp))
+y2018.15 <- ds(datos_ord %>% filter(año == '2018'),transect = "point", key = "unif", cutpoints = cp, adjustment=NULL, truncation = max(cp))
+y2019.15 <- ds(datos_ord %>% filter(año == '2019'),transect = "point", key = "unif", cutpoints = cp, adjustment=NULL, truncation = max(cp))
+y2021.15 <- ds(datos_ord %>% filter(año == '2021'),transect = "point", key = "unif", cutpoints = cp, adjustment=NULL, truncation = max(cp))
+```
+```{r}
+serietemp.15 <- list()
+serietemp.15$A <- y2015.15
+serietemp.15$B <- y2016.15
+serietemp.15$C <- y2017.15
+serietemp.15$D <- y2018.15
+serietemp.15$E <- y2019.15
+serietemp.15$G <- y2021.15
+
+res.list.15 <- map(serietemp.15,extract_model_data_table)
+res.tabla.15 <- res.tabla.10 %>%
+  add_row(res.list.15[[1]]) %>% 
+  add_row(res.list.15[[2]]) %>% 
+  add_row(res.list.15[[3]]) %>% 
+  add_row(res.list.15[[4]]) %>% 
+  add_row(res.list.15[[5]]) %>% 
+  add_row(res.list.15[[6]])
+
+res.tabla.15$Yr <- c("2015","2016","2017","2018","2019","2021",
+                     "2015","2016","2017","2018","2019","2021",
+                     "2015","2016","2017","2018","2019","2021")
+res.tabla.15$trunc_dist <- c(rep("a20",6),rep("a10",6), rep("a15",6))
+res.tabla.15 <- res.tabla.15 %>% select(Yr,trunc_dist,estacas,nidos,Area_tot,N_est,se_N,ICinf_N,ICsup_N,
+                    df_N,D_est,se_D,ICinf_D,ICsup_D,df_D,AIC) %>% 
+  mutate(
+    D_estHa = D_est * 10000,
+    ICinf_DHa = ICinf_D * 10000,
+    ICsup_DHa = ICsup_D * 10000
+  )
+
+ggplot(res.tabla.15, aes(x = Yr, y = D_estHa, group = trunc_dist, col = trunc_dist))+
+  scale_y_continuous(limits = c(0,0.2)*10000)+
+  geom_ribbon(aes(ymin = ICinf_DHa, ymax = ICsup_DHa, group = trunc_dist),    # shadowing cnf intervals
+            fill = "steelblue4", alpha = .2, linetype = "dotted") + 
+  geom_line(size = 1)+
+  theme_classic()
 ```
 

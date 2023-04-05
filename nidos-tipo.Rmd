@@ -1,0 +1,62 @@
+---
+title: "tipo de nido"
+output: html_document
+date: "2023-03-17"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Vamos a analizar el tipo de nido: mata cueva.
+Trabajamos con los datos que ordenamos en distance-nidos
+
+```{r}
+datos_ord <- read_csv2("datos_ord.csv", col_types = cols(
+  Sample.Label = col_factor(),
+  tipo_nido = col_factor(c("mata","cueva"))
+)  )
+
+```
+
+```{r}
+tabla <- datos_ord %>% 
+  filter(!is.na(tipo_nido)) %>% 
+  group_by(año, tipo_nido) %>% 
+  summarise(
+    cant = n()
+  )
+```
+
+```{r}
+ggplot(tabla,aes(x = año, y = cant, fill = tipo_nido))+
+  geom_col()+
+  theme_minimal()
+
+ggplot(tabla,aes(x = año, y = cant, fill = tipo_nido))+
+  geom_col(position = position_fill())+
+  theme_minimal()
+
+ggplot(tabla, aes(x = año, y = cant, group = tipo_nido, col = tipo_nido))+
+  geom_line()+
+  scale_y_continuous(limits = c(0,6200))+
+  theme_minimal()
+```
+
+Y por estaca?
+```{r}
+tabla_st <- datos_ord %>% 
+  filter(!is.na(tipo_nido)) %>% 
+  group_by(año,Sample.Label, tipo_nido) %>% 
+  summarise(
+    cant = n()
+  )
+
+ggplot(tabla_st,aes(x = año, y = cant, fill = tipo_nido))+
+  geom_col()+
+  theme_minimal()+
+  facet_wrap(~Sample.Label)
+
+
+```
+

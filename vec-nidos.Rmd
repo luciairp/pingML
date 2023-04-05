@@ -34,6 +34,20 @@ data <- read_csv2("pinguinos15-21.csv", col_types = cols(
 )  )
 ```
 
+Estad descr de data, antes de armar conjunto de datos de vecino más cercanio por estaca
+```{r}
+descr <- data %>% 
+  group_by(ano,estaca) %>% 
+  summarise(
+    media = mean(distancia),
+    min = min(distancia)
+  )
+```
+
+
+
+
+
 ```{r}
 vecino <- data %>%
   filter(!is.na(distancia)) %>% 
@@ -41,10 +55,24 @@ vecino <- data %>%
   summarise(
     dist=min(distancia)) %>% 
     mutate(dist_centro=dist-0.5) %>% 
-  select(ano,estaca,dist_centro) %>% 
+  select(ano,estaca,dist,dist_centro) %>% 
   ungroup()
   
 ```
+descriptiva conjunto de mínimos de cada año
+```{r}
+descr_vec <- vecino %>% 
+  group_by(ano) %>% 
+  summarise(
+    media = mean(dist_centro),
+    sd = sd(dist_centro),
+    med = median(dist_centro)
+  )
+```
+
+Tienen misma mediana los años 2015, 6 y 7; y 2019 y 2021.
+
+
 ```{r}
 vec15 <- vecino %>% filter (ano=="2015") %>% 
   select(dist_centro)
@@ -75,6 +103,15 @@ area <- 35
 dens15_total <-  368.5758 * area
 ```
 ```{r}
+vec15[vec15>20]<-NA
+vec16[vec16>20]<-NA
+vec17[vec17>20]<-NA
+vec18[vec18>20]<-NA
+vec19[vec19>20]<-NA
+vec21[vec21>20]<-NA
+
+
+(dens15 <- np.density.est (vec15))
 (dens16 <- np.density.est (vec16))
 (dens17 <- np.density.est (vec17))
 (dens18 <- np.density.est (vec18))
@@ -83,7 +120,46 @@ dens15_total <-  368.5758 * area
 ```
 
 
+Probar... restar a cada valor máximo de categoría un valor aleatorion de una distribución uniforme entre 0.99 y 0.01
 
 
+```{r}
+
+for (i in 1:263){
+  valorr <- runif(263,0.01,0.99)
+  vecino$dist_var[i] <- vecino$dist[i] - valorr[i]
+  }
+
+
+```
+
+```{r}
+vec15 <- vecino %>% filter (ano=="2015") %>% 
+  select(dist_var)
+vec16 <- vecino %>% filter (ano=="2016") %>% 
+  select(dist_var)
+vec17 <- vecino %>% filter (ano=="2017") %>% 
+  select(dist_var)
+vec18 <- vecino %>% filter (ano=="2018") %>% 
+  select(dist_var)
+vec19 <- vecino %>% filter (ano=="2019") %>% 
+  select(dist_var)
+vec21 <- vecino %>% filter (ano=="2021") %>% 
+  select(dist_var)
+
+vec15[vec15>20]<-NA
+vec16[vec16>20]<-NA
+vec17[vec17>20]<-NA
+vec18[vec18>20]<-NA
+vec19[vec19>20]<-NA
+vec21[vec21>20]<-NA
+
+(dens15 <- np.density.est(vec15))
+(dens16 <- np.density.est(vec16))
+(dens17 <- np.density.est(vec17))
+(dens18 <- np.density.est(vec18))
+(dens19 <- np.density.est(vec19))
+(dens21 <- np.density.est(vec21))
+```
 
 

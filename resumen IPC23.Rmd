@@ -8,3 +8,17 @@ date: "2023-03-16"
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+Monitoreo de la colonia de Pingüino de Magallanes en el Parque Nacional Monte León (2015-2021). Desafíos de...
+
+Intro: colonia ping ML parque nacional, cuevas y molles, seguimiento largo plazo dificultades metodológicas largo plazo
+
+MyM
+
+Seguimiento entre 2015 y 2021 con 44 estacas fijas en terreno dispuestas sistemáticamente. Conteo total por punto en radios de 20 m, y registro de cantidad en radios incrementales de 1 m para usar estimación con métodos de distancia. Se estimó la densidad por quadrat count (Krebs ...) y or métodos de distancia con la función ds del paquete distance en R, con función uniforme, sin ajustes (ya que la detectabilidad dentro del radio de 20 m es total), se truncaron los datos a la distancia máxima considerada y se consideraron distancias desde la estaca, medidas con precisión al metro entero superior inmediato. Se estudió el efecto de truncar los datos a 20 m (la información disponible), a 15 y a 10 m de radio. Evaluación de ambientes usados en el tiempo. Análisis espacial por zonas.
+
+
+Res:
+Comparación de valores, método distancia y quadrat count.
+Se observa que la colonia está estable en valores promedio de 1200 parejas reproductivas.
+Considerar radios más pequeños devuelve estimaciones de abundancia ligeramente mayores, ya que se revisa áreas más pequeñas donde las ausencias de nidos son menos relevantes respecto a radios mayores (área crece con el radio al cuadrado, no linealmente). Sin embargo, dada la poca pérdida de información y la gran disminución del esfuerzo que implica, no es necesario sostener radios de 20 m para contar con una buena estimación de densidad, y ese radio podría reducirse.
+Ambientes: mata cueva que 

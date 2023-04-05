@@ -1,0 +1,14 @@
+---
+title: "mapa-nidos"
+output: html_document
+date: "2023-04-05"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+1) coordenadas estacas
+2) shape perímetro
+3) datos estaca total nidos
+4) eso por año y tipo de nido (nidos totales y prop cueva)
