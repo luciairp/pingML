@@ -12,3 +12,113 @@ knitr::opts_chunk$set(echo = TRUE)
 2) shape perímetro
 3) datos estaca total nidos
 4) eso por año y tipo de nido (nidos totales y prop cueva)
+
+estaca | coord_x | coord_y | nidos_tot | prop_mata | año
+1
+2
+3
+4
+
+
+```{r}
+library(tidyverse)
+
+```
+
+```{r cargar datos nidos}
+datos_ord <- read_csv2("datos_ord.csv", col_types = cols(
+  Sample.Label = col_factor(),
+  tipo_nido = col_factor(c("mata","cueva"))
+)  )
+
+datos_ord_2 <- datos_ord %>% 
+  filter(!is.na(tipo_nido)) %>% 
+  group_by(Sample.Label,año, tipo_nido) %>% 
+  summarise(
+    cant = n()
+  )
+
+nid_estaca <- datos_ord_2 %>% 
+  pivot_wider(names_from = tipo_nido, values_from = cant) %>% 
+  mutate(mata = replace_na(mata, 0),
+         cueva = replace_na(cueva, 0)) %>% 
+  mutate(
+    total = mata + cueva,
+    prop_mata = mata/total,
+    prop_cueva = cueva/total
+  )
+
+```
+
+```{r cargar datos coord}
+library(sf)
+library(tmap)
+
+estacas <- st_read("shapes/Estacas/estacas pinguinera.shp")
+
+
+
+plot(estacas$geometry)
+#est <- estacas$geometry
+#est <- st_zm(st_read("shapes/Estacas/estacas pinguinera.shp"),drop = TRUE, what = "ZM")
+
+
+estacas2 <- estacas %>% 
+  mutate(
+    Sample.Label = str_extract(Name,"\\d+")) 
+
+coord <- estacas2 %>% 
+  st_coordinates() %>% 
+  as.data.frame()
+
+coord$Sample.Label <- estacas2$Sample.Label
+
+# agregar recordatorio explicación regex
+```
+
+```{r mapas}
+
+nid_estaca_coord <- nid_estaca %>% left_join(coord)
+nid_estaca_coord <- st_as_sf(nid_estaca_coord, coords=c("X","Y"), crs= 4326)
+
+
+mapa <- nid_estaca_coord + 
+  tm_shape(nid_estaca_coord)+
+  tm_dots(mata,shape=16,size=3,col='darkgray')
+
+
+plot(nid_estaca_coord)
+
+
+nid_estaca_coord %>% filter(año == "2015") %>% 
+ggplot(data = .)+
+  geom_sf(aes(size = total))+
+  theme_light()
+
+nid_estaca_coord %>% filter(año == "2016") %>% 
+ggplot(data = .)+
+  geom_sf(aes(size = total))+
+  theme_light()
+
+nid_estaca_coord %>% filter(año == "2017") %>% 
+ggplot(data = .)+
+  geom_sf(aes(size = total))+
+  theme_light()
+
+nid_estaca_coord %>% filter(año == "2018") %>% 
+ggplot(data = .)+
+  geom_sf(aes(size = total))+
+  theme_light()
+
+nid_estaca_coord %>% filter(año == "2019") %>% 
+ggplot(data = .)+
+  geom_sf(aes(size = total))+
+  theme_light()
+
+nid_estaca_coord %>% filter(año == "2021") %>% 
+ggplot(data = .)+
+  geom_sf(aes(size = total))+
+  theme_light()
+
+```
+

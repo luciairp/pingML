@@ -12,6 +12,11 @@ Vamos a analizar el tipo de nido: mata cueva.
 Trabajamos con los datos que ordenamos en distance-nidos
 
 ```{r}
+library(tidyverse)
+```
+
+
+```{r}
 datos_ord <- read_csv2("datos_ord.csv", col_types = cols(
   Sample.Label = col_factor(),
   tipo_nido = col_factor(c("mata","cueva"))
