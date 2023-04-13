@@ -17,7 +17,7 @@ library(Distance)
 
 Trabajaremos sobre el objeto que generamos en etapa anterior:
 ```{r}
-data <- read_csv("pinguinos15-21.csv", col_types = cols(
+data <- read_csv2("pinguinos15-21.csv", col_types = cols(
    estaca = col_factor()
 )  )
 ```
@@ -29,20 +29,20 @@ datos_ord <- data %>%
   pivot_longer(cols = c('mata', 'cueva'), names_to = "tipo_nido", values_to = "obs") %>% 
   filter(obs > 0) %>% 
   uncount(weights = obs) %>% 
-  select(estaca, distancia, año, tipo_nido) %>% 
+  select(estaca, distancia, ano, tipo_nido) %>% 
   rename(distance = distancia,
          #size = esfuerzo, #saco info de size por si complica interpretación por grupos, q no hay
          Sample.Label = estaca) %>% 
   mutate(Region.Label = "coloniaML",
          Effort = 1,
          Area = 350000) %>% 
-  add_row(Sample.Label = "42", distance = NA, año = 2018, tipo_nido = NA, Region.Label = "coloniaML", Effort = 1, Area = 350000) %>% 
-   add_row(Sample.Label = "42", distance = NA, año = 2019, tipo_nido = NA, Region.Label = "coloniaML", Effort = 1, Area = 350000) %>% 
-  add_row(Sample.Label = "42", distance = NA, año = 2021, tipo_nido = NA, Region.Label = "coloniaML", Effort = 1, Area = 350000) %>% 
-  add_row(Sample.Label = "1", distance = NA, año = 2021, tipo_nido = NA, Region.Label = "coloniaML", Effort = 1, Area = 350000) %>% 
+  add_row(Sample.Label = "42", distance = NA, ano = 2018, tipo_nido = NA, Region.Label = "coloniaML", Effort = 1, Area = 350000) %>% 
+   add_row(Sample.Label = "42", distance = NA, ano = 2019, tipo_nido = NA, Region.Label = "coloniaML", Effort = 1, Area = 350000) %>% 
+  add_row(Sample.Label = "42", distance = NA, ano = 2021, tipo_nido = NA, Region.Label = "coloniaML", Effort = 1, Area = 350000) %>% 
+  add_row(Sample.Label = "1", distance = NA, ano = 2021, tipo_nido = NA, Region.Label = "coloniaML", Effort = 1, Area = 350000) %>% 
   mutate(
     Sample.Label = as.factor(Sample.Label),
-    año = as.factor(año)
+    ano = as.factor(ano)
          )
 #write_csv2(datos_ord, "datos_ord.csv")
   
@@ -50,12 +50,12 @@ datos_ord <- data %>%
 # con funcion add_row: 1 en 2019 y 2 en 2021
 
 tabla_res <- datos_ord %>% 
-  group_by(año, Sample.Label) %>% 
+  group_by(ano, Sample.Label) %>% 
   summarise(
     n = n()
   )
 tabla_res2 <- datos_ord %>% 
-  group_by(año) %>% 
+  group_by(ano) %>% 
   summarise(
     n = n()
   )
@@ -73,7 +73,7 @@ cp <- c(0:20)
 #conversion.factor <- convert_units("Meter", "Kilometer", "Hectare") NO ANDA
   
 
-y2015 <- ds(datos_ord %>% filter(año == '2015'),transect = "point", key = "unif", cutpoints = cp)
+y2015 <- ds(datos_ord %>% filter(ano == '2015'),transect = "point", key = "unif", cutpoints = cp)
 
 
 ```
@@ -107,12 +107,12 @@ extract_model_data_table <- function(model){
 Hacemos estimación para todos los años
 ```{r}
 cp <- c(0:20)
-y2015 <- ds(datos_ord %>% filter(año == '2015'),transect = "point", key = "unif", cutpoints = cp, adjustment=NULL, truncation = 20)
-y2016 <- ds(datos_ord %>% filter(año == '2016'),transect = "point", key = "unif", cutpoints = cp, adjustment=NULL, truncation = 20)
-y2017 <- ds(datos_ord %>% filter(año == '2017'),transect = "point", key = "unif", cutpoints = cp, adjustment=NULL, truncation = 20)
-y2018 <- ds(datos_ord %>% filter(año == '2018'),transect = "point", key = "unif", cutpoints = cp, adjustment=NULL, truncation = 20)
-y2019 <- ds(datos_ord %>% filter(año == '2019'),transect = "point", key = "unif", cutpoints = cp, adjustment=NULL, truncation = 20)
-y2021 <- ds(datos_ord %>% filter(año == '2021'),transect = "point", key = "unif", cutpoints = cp, adjustment=NULL, truncation = 20)
+y2015 <- ds(datos_ord %>% filter(ano == '2015'),transect = "point", key = "unif", cutpoints = cp, adjustment=NULL, truncation = 20)
+y2016 <- ds(datos_ord %>% filter(ano == '2016'),transect = "point", key = "unif", cutpoints = cp, adjustment=NULL, truncation = 20)
+y2017 <- ds(datos_ord %>% filter(ano == '2017'),transect = "point", key = "unif", cutpoints = cp, adjustment=NULL, truncation = 20)
+y2018 <- ds(datos_ord %>% filter(ano == '2018'),transect = "point", key = "unif", cutpoints = cp, adjustment=NULL, truncation = 20)
+y2019 <- ds(datos_ord %>% filter(ano == '2019'),transect = "point", key = "unif", cutpoints = cp, adjustment=NULL, truncation = 20)
+y2021 <- ds(datos_ord %>% filter(ano == '2021'),transect = "point", key = "unif", cutpoints = cp, adjustment=NULL, truncation = 20)
 
 
 ♥
@@ -142,8 +142,15 @@ res.tabla <- res.tabla %>% select(Yr,estacas,nidos,Area_tot,N_est,se_N,ICinf_N,I
     ICinf_DHa = ICinf_D * 10000,
     ICsup_DHa = ICsup_D * 10000
   )
-#write_csv2(res.tabla, "res_estim1521.csv")
+#write_csv(res.tabla, "res_estim1521.csv")
 
+res.distance.final <- res.tabla %>% select(Yr, D_estHa, ICinf_DHa, ICsup_DHa) %>% 
+  mutate(
+    N_35ha = D_estHa*35,
+    ICinf_N_35ha = ICinf_DHa*35,
+    ICsup_N_35ha = ICsup_DHa*35
+  )
+write.csv(res.distance.final, "resultados distance 20m 15 a 21.csv")
 ```
 
 Miremos las salidas del distance

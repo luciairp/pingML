@@ -1,0 +1,114 @@
+---
+title: "quadrat-nidos"
+output: html_document
+date: "2023-04-13"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+Hacemos estimación de densidad de nidos por quadrat-count siguiendo a Krebs
+```{r}
+library(tidyverse)
+```
+
+```{r datos}
+datos_ord <- read_csv2("datos_ord.csv", col_types = cols(
+  Sample.Label = col_factor(),
+  tipo_nido = col_factor(c("mata","cueva"))
+)  )
+
+datos_ord_20m <- datos_ord %>% 
+  filter(!is.na(tipo_nido)) %>% 
+  group_by(Sample.Label,año, tipo_nido) %>% 
+  summarise(
+    cant = n()
+  ) %>% 
+  pivot_wider(names_from = tipo_nido, values_from = cant) %>% 
+  mutate(mata = replace_na(mata, 0),
+         cueva = replace_na(cueva, 0)) %>% 
+  mutate(
+    total = mata + cueva,
+  )
+
+datos_ord_15m <- datos_ord %>% 
+  filter(!is.na(tipo_nido)) %>% 
+  filter(distance <= 15) %>% 
+  group_by(Sample.Label,año, tipo_nido) %>% 
+  summarise(
+    cant = n()
+  )%>% 
+  pivot_wider(names_from = tipo_nido, values_from = cant) %>% 
+  mutate(mata = replace_na(mata, 0),
+         cueva = replace_na(cueva, 0)) %>% 
+  mutate(
+    total = mata + cueva,
+  )
+
+datos_ord_10m <- datos_ord %>% 
+  filter(!is.na(tipo_nido)) %>% 
+  filter(distance <= 10) %>% 
+  group_by(Sample.Label,año, tipo_nido) %>% 
+  summarise(
+    cant = n()
+  )%>% 
+  pivot_wider(names_from = tipo_nido, values_from = cant) %>% 
+  mutate(mata = replace_na(mata, 0),
+         cueva = replace_na(cueva, 0)) %>% 
+  mutate(
+    total = mata + cueva,
+  )
+
+# en 20 m de radio = 1256 m2 o 0.1256 ha
+res20 <- datos_ord_20m %>% 
+  group_by(año) %>% 
+  summarise(
+    n = n(),
+    media = mean(total),
+    media.ha = mean(total)*7.96,
+    sd = sd(total),
+    sd.ha = sd*7.96,
+    se.ha = (sd/sqrt(n))*7.96,
+    dIC.ha = se.ha * qt((1-0.05)/2 + .5, n-1), # = a decir 1.96 * se
+    ICmin.ha = media.ha - dIC.ha,
+    ICmax.ha = media.ha + dIC.ha
+  ) %>% 
+  select(año, n, media.ha, se.ha, ICmin.ha, ICmax.ha)
+
+# en 15 m de radio = 706.5 m2 , 10000/706.5 es el factor = 14.15
+res15 <- datos_ord_15m %>% 
+  group_by(año) %>% 
+  summarise(
+    n = n(),
+    media = mean(total),
+    media.ha = mean(total)*14.15,
+    sd = sd(total),
+    sd.ha = sd*14.15,
+    se.ha = (sd/sqrt(n))*14.15,
+    dIC.ha = se.ha * qt((1-0.05)/2 + .5, n-1), # = a decir 1.96 * se
+    ICmin.ha = media.ha - dIC.ha,
+    ICmax.ha = media.ha + dIC.ha
+  ) %>% 
+  select(año, n, media.ha, se.ha, ICmin.ha, ICmax.ha)
+
+# en 10 m de radio = 314.15 m2 , 10000/314.15 es el factor = 31.83 
+res10 <- datos_ord_10m %>% 
+  group_by(año) %>% 
+  summarise(
+    n = n(),
+    media = mean(total),
+    media.ha = mean(total)*31.83,
+    sd = sd(total),
+    sd.ha = sd*31.83,
+    se.ha = (sd/sqrt(n))*31.83,
+    dIC.ha = se.ha * qt((1-0.05)/2 + .5, n-1), # = a decir 1.96 * se
+    ICmin.ha = media.ha - dIC.ha,
+    ICmax.ha = media.ha + dIC.ha
+  ) %>% 
+  select(año, n, media.ha, se.ha, ICmin.ha, ICmax.ha)
+
+
+```
+

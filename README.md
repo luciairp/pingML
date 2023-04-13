@@ -23,3 +23,18 @@ Dia 04-04-23
 Trabajamos con la base de datos para vecino mas cercano.
 Se modificaron datos en la base para llevar a 21 metros las estacas que no tenian nidos. 
 Se corrió el script para vecinos mas cercanos para todos los años. Debemos continuar trabajando para solucionar las estimaciones del vecino mas cercano ya que dan bastante distintas a las del distance
+
+Día 13-04-23
+Completamos mapas, cueva y mata, estimaciones de densidad por quadrat count.
+Tenemos que cerrar resumen.
+Lo que vemos hasta ahora es que:
+- no hay diferencia entre métodos de estimación por quadrat count y por distancia.
+- hay estabilidad numérica en la cantidad de parejas
+- no hay cambios evidentes en forma de la colonia ni cant ni prop de mata y cueva
+
+A futuro:
+- interpolación de valores para nidos
+- mapa de cambios respecto a tiempo anterior, comparando tiempo a tiempo y poniendo flecha si hay aumento o disminución en cada estaca
+- todo esto con video animado por año
+(para quadrat count falta agregar estacas con 0 recuento)
+(faltan perímetros de ping para ver cambios en el tiempo)
