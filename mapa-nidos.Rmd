@@ -115,7 +115,7 @@ ggplot(data = .)+
   geom_sf(aes(size = total))+
   theme_light()
 
-#mapa con ggplot
+#mapa abundancia con ggplot
 ping_plot <- nid_estaca_coord %>%
   ggplot() +
   geom_sf(data=perimetro, color="grey",alpha=0.8)+
@@ -132,20 +132,49 @@ ping_plot <- nid_estaca_coord %>%
     style = north_arrow_fancy_orienteering)
 ping_plot
 
-ggsave("pinguinera.png",ping_plot,width = 35,
-       height = 35,units = "cm" ,dpi = 300, ) #png
+ggsave("pinguinera.png",ping_plot,width = 40,
+       height = 40,units = "cm" ,dpi = 300, ) #png
+
+#mapa ambiente (cueva/mata)
+#mata
+mata_plot <- nid_estaca_coord %>%
+  ggplot() +
+  geom_sf(data=perimetro, color="grey",alpha=0.8)+
+  geom_sf(aes(size = prop_mata), col="lightgreen")+
+  geom_sf_text(data = nid_estaca_coord, 
+               aes(label = Sample.Label),check_overlap = F, size=3,color = "black")+
+  theme_light()+
+  facet_wrap(~año)+
+  labs(y = "latitud", x = "longitud", title = "Proporción de matas por estaca") +
+  theme_bw()+ 
+  annotation_scale(location = "br", width_hint = 0.3,  
+                   pad_x = unit(1, "cm"), pad_y = unit(0.5, "cm"))+
+  annotation_north_arrow( location = "tl", pad_x = unit(0.2, "in"), pad_y = unit(0.1, "in"),
+    style = north_arrow_fancy_orienteering)
+mata_plot
+
+ggsave("prop_mata.png",mata_plot,width = 40,
+       height = 40,units = "cm" ,dpi = 300, ) #png
+
+#cueva
+cueva_plot <- nid_estaca_coord %>%
+  ggplot() +
+  geom_sf(data=perimetro, color="grey",alpha=0.8)+
+  geom_sf(aes(size = prop_cueva), col="orange")+
+  geom_sf_text(data = nid_estaca_coord, 
+               aes(label = Sample.Label),check_overlap = F, size=3,color = "black")+
+  theme_light()+
+  facet_wrap(~año)+
+  labs(y = "latitud", x = "longitud", title = "Proporcion de cuevas por estaca") +
+  theme_bw()+ 
+  annotation_scale(location = "br", width_hint = 0.3,  
+                   pad_x = unit(1, "cm"), pad_y = unit(0.5, "cm"))+
+  annotation_north_arrow( location = "tl", pad_x = unit(0.2, "in"), pad_y = unit(0.1, "in"),
+    style = north_arrow_fancy_orienteering)
+cueva_plot
+
+ggsave("prop_cueva.png",cueva_plot,width = 40,
+       height = 40,units = "cm" ,dpi = 300, ) #png
 
 
-#mapa con tmap
-pinguinera <-
-      tm_shape(perimetro,unit = "km")+ 
-        tm_polygons(col='ivory',lwd=2)+
-      tm_shape(nid_estaca_coord)+
-        tm_dots(size="total", col = "año",)+
-    
-  tm_compass(type ="4star",position=c(0.2, 0.85), show.labels = 2,
-             text.size = 0.5, cardinal.directions = c("N", "E", "S", "O"))+
-    tm_scale_bar(width = 0.2,position=c(0.3, 0.02),lwd = 0.01)
-pinguinera
 ```
-
