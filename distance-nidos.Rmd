@@ -177,12 +177,12 @@ Quiero ver qué pasa si se consideran los datos con diferentes valores de trunca
 ```{r}
 
 cp <- c(0:10)
-y2015.10 <- ds(datos_ord %>% filter(año == '2015'),transect = "point", key = "unif", cutpoints = cp, adjustment=NULL, truncation = max(cp))
-y2016.10 <- ds(datos_ord %>% filter(año == '2016'),transect = "point", key = "unif", cutpoints = cp, adjustment=NULL, truncation = max(cp))
-y2017.10 <- ds(datos_ord %>% filter(año == '2017'),transect = "point", key = "unif", cutpoints = cp, adjustment=NULL, truncation = max(cp))
-y2018.10 <- ds(datos_ord %>% filter(año == '2018'),transect = "point", key = "unif", cutpoints = cp, adjustment=NULL, truncation = max(cp))
-y2019.10 <- ds(datos_ord %>% filter(año == '2019'),transect = "point", key = "unif", cutpoints = cp, adjustment=NULL, truncation = max(cp))
-y2021.10 <- ds(datos_ord %>% filter(año == '2021'),transect = "point", key = "unif", cutpoints = cp, adjustment=NULL, truncation = max(cp))
+y2015.10 <- ds(datos_ord %>% filter(ano == '2015'),transect = "point", key = "unif", cutpoints = cp, adjustment=NULL, truncation = max(cp))
+y2016.10 <- ds(datos_ord %>% filter(ano == '2016'),transect = "point", key = "unif", cutpoints = cp, adjustment=NULL, truncation = max(cp))
+y2017.10 <- ds(datos_ord %>% filter(ano == '2017'),transect = "point", key = "unif", cutpoints = cp, adjustment=NULL, truncation = max(cp))
+y2018.10 <- ds(datos_ord %>% filter(ano == '2018'),transect = "point", key = "unif", cutpoints = cp, adjustment=NULL, truncation = max(cp))
+y2019.10 <- ds(datos_ord %>% filter(ano == '2019'),transect = "point", key = "unif", cutpoints = cp, adjustment=NULL, truncation = max(cp))
+y2021.10 <- ds(datos_ord %>% filter(ano == '2021'),transect = "point", key = "unif", cutpoints = cp, adjustment=NULL, truncation = max(cp))
 
 
 ```
@@ -227,12 +227,12 @@ ggplot(res.tabla.10, aes(x = Yr, y = D_estHa, group = trunc_dist, col = trunc_di
 Lo mismo pero a 15 m
 ```{r}
 cp <- c(0:15)
-y2015.15 <- ds(datos_ord %>% filter(año == '2015'),transect = "point", key = "unif", cutpoints = cp, adjustment=NULL, truncation = max(cp))
-y2016.15 <- ds(datos_ord %>% filter(año == '2016'),transect = "point", key = "unif", cutpoints = cp, adjustment=NULL, truncation = max(cp))
-y2017.15 <- ds(datos_ord %>% filter(año == '2017'),transect = "point", key = "unif", cutpoints = cp, adjustment=NULL, truncation = max(cp))
-y2018.15 <- ds(datos_ord %>% filter(año == '2018'),transect = "point", key = "unif", cutpoints = cp, adjustment=NULL, truncation = max(cp))
-y2019.15 <- ds(datos_ord %>% filter(año == '2019'),transect = "point", key = "unif", cutpoints = cp, adjustment=NULL, truncation = max(cp))
-y2021.15 <- ds(datos_ord %>% filter(año == '2021'),transect = "point", key = "unif", cutpoints = cp, adjustment=NULL, truncation = max(cp))
+y2015.15 <- ds(datos_ord %>% filter(ano == '2015'),transect = "point", key = "unif", cutpoints = cp, adjustment=NULL, truncation = max(cp))
+y2016.15 <- ds(datos_ord %>% filter(ano == '2016'),transect = "point", key = "unif", cutpoints = cp, adjustment=NULL, truncation = max(cp))
+y2017.15 <- ds(datos_ord %>% filter(ano == '2017'),transect = "point", key = "unif", cutpoints = cp, adjustment=NULL, truncation = max(cp))
+y2018.15 <- ds(datos_ord %>% filter(ano == '2018'),transect = "point", key = "unif", cutpoints = cp, adjustment=NULL, truncation = max(cp))
+y2019.15 <- ds(datos_ord %>% filter(ano == '2019'),transect = "point", key = "unif", cutpoints = cp, adjustment=NULL, truncation = max(cp))
+y2021.15 <- ds(datos_ord %>% filter(ano == '2021'),transect = "point", key = "unif", cutpoints = cp, adjustment=NULL, truncation = max(cp))
 ```
 ```{r}
 serietemp.15 <- list()
@@ -267,8 +267,8 @@ res.tabla.15 <- res.tabla.15 %>% select(Yr,trunc_dist,estacas,nidos,Area_tot,N_e
 ggplot(res.tabla.15, aes(x = Yr, y = D_estHa, group = trunc_dist, col = trunc_dist))+
   scale_y_continuous(limits = c(0,0.2)*10000)+
   geom_ribbon(aes(ymin = ICinf_DHa, ymax = ICsup_DHa, group = trunc_dist),    # shadowing cnf intervals
-            fill = "steelblue4", alpha = .2, linetype = "dotted") + 
-  geom_line(size = 1)+
+            fill = "grey", alpha = .4, linetype = "dotdash", size=1) + 
+  geom_line(size = 1.5)+
   theme_classic()
 ```
 
