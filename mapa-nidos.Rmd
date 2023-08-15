@@ -50,14 +50,13 @@ nid_estaca <- datos_ord_2 %>%
 
 ```
 
-```{r cargar datos perimetro y coord}
+```{r cargar datos coord}
 library(sf)
 library(tmap)
-library(ggspatial)
-
-perimetro <-st_read("shapes/perimetro final/perimetro_2016 final.shp")
 
 estacas <- st_read("shapes/Estacas/estacas pinguinera.shp")
+
+
 
 plot(estacas$geometry)
 #est <- estacas$geometry
@@ -82,9 +81,15 @@ coord$Sample.Label <- estacas2$Sample.Label
 nid_estaca_coord <- nid_estaca %>% left_join(coord)
 nid_estaca_coord <- st_as_sf(nid_estaca_coord, coords=c("X","Y"), crs= 4326)
 
+
+mapa <- nid_estaca_coord + 
+  tm_shape(nid_estaca_coord)+
+  tm_dots(mata,shape=16,size=3,col='darkgray')
+
+
 plot(nid_estaca_coord)
 
-#nidos de estacas por año
+
 nid_estaca_coord %>% filter(año == "2015") %>% 
 ggplot(data = .)+
   geom_sf(aes(size = total))+
@@ -115,66 +120,5 @@ ggplot(data = .)+
   geom_sf(aes(size = total))+
   theme_light()
 
-#mapa abundancia con ggplot
-ping_plot <- nid_estaca_coord %>%
-  ggplot() +
-  geom_sf(data=perimetro, color="grey",alpha=0.8)+
-  geom_sf(aes(size = total), col="lightblue")+
-  geom_sf_text(data = nid_estaca_coord, 
-               aes(label = Sample.Label),check_overlap = F, size=3,color = "black")+
-  theme_light()+
-  facet_wrap(~año)+
-  labs(y = "latitud", x = "longitud", title = "Nidos activos por estaca") +
-  theme_bw()+ 
-  annotation_scale(location = "br", width_hint = 0.3,  
-                   pad_x = unit(1, "cm"), pad_y = unit(0.5, "cm"))+
-  annotation_north_arrow( location = "tl", pad_x = unit(0.2, "in"), pad_y = unit(0.1, "in"),
-    style = north_arrow_fancy_orienteering)
-ping_plot
-
-ggsave("pinguinera.png",ping_plot,width = 40,
-       height = 40,units = "cm" ,dpi = 300, ) #png
-
-#mapa ambiente (cueva/mata)
-#mata
-mata_plot <- nid_estaca_coord %>%
-  ggplot() +
-  geom_sf(data=perimetro, color="grey",alpha=0.8)+
-  geom_sf(aes(size = prop_mata), col="lightgreen")+
-  geom_sf_text(data = nid_estaca_coord, 
-               aes(label = Sample.Label),check_overlap = F, size=3,color = "black")+
-  theme_light()+
-  facet_wrap(~año)+
-  labs(y = "latitud", x = "longitud", title = "Proporción de matas por estaca") +
-  theme_bw()+ 
-  annotation_scale(location = "br", width_hint = 0.3,  
-                   pad_x = unit(1, "cm"), pad_y = unit(0.5, "cm"))+
-  annotation_north_arrow( location = "tl", pad_x = unit(0.2, "in"), pad_y = unit(0.1, "in"),
-    style = north_arrow_fancy_orienteering)
-mata_plot
-
-ggsave("prop_mata.png",mata_plot,width = 40,
-       height = 40,units = "cm" ,dpi = 300, ) #png
-
-#cueva
-cueva_plot <- nid_estaca_coord %>%
-  ggplot() +
-  geom_sf(data=perimetro, color="grey",alpha=0.8)+
-  geom_sf(aes(size = prop_cueva), col="orange")+
-  geom_sf_text(data = nid_estaca_coord, 
-               aes(label = Sample.Label),check_overlap = F, size=3,color = "black")+
-  theme_light()+
-  facet_wrap(~año)+
-  labs(y = "latitud", x = "longitud", title = "Proporcion de cuevas por estaca") +
-  theme_bw()+ 
-  annotation_scale(location = "br", width_hint = 0.3,  
-                   pad_x = unit(1, "cm"), pad_y = unit(0.5, "cm"))+
-  annotation_north_arrow( location = "tl", pad_x = unit(0.2, "in"), pad_y = unit(0.1, "in"),
-    style = north_arrow_fancy_orienteering)
-cueva_plot
-
-ggsave("prop_cueva.png",cueva_plot,width = 40,
-       height = 40,units = "cm" ,dpi = 300, ) #png
-
-
 ```
+
