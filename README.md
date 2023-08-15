@@ -17,12 +17,12 @@ tracks en QGIS 3.18.2 y se corrigieron los perimetros tomando las siguientes dec
 Hasta el 10/03 se fixeo:
 1) Perimetro 2016
 
-Alclaración: el track 2022 que está en el drive es de exploracion. Ya se le pidio a Grisel el track que necesitamos. 
+Aclaración: el track 2022 que está en el drive es de exploracion. Ya se le pidio a Grisel el track que necesitamos. 
 
 Dia 04-04-23
 Trabajamos con la base de datos para vecino mas cercano.
 Se modificaron datos en la base para llevar a 21 metros las estacas que no tenian nidos. 
-Se corrió el script para vecinos mas cercanos para todos los años. Debemos continuar trabajando para solucionar las estimaciones del vecino mas cercano ya que dan bastante distintas a las del distance
+Se corrió el script para vecinos mas cercanos para todos los años. Debemos continuar trabajando para solucionar las estimaciones del vecino mas cercano ya que dan bastante distintas a las del distance por no tener resolución adecuada a distancias cortas (en el campo, todas las medidas se llevan al metro superior inmediato)
 
 Día 13-04-23
 Completamos mapas, cueva y mata, estimaciones de densidad por quadrat count.
