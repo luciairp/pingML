@@ -120,5 +120,72 @@ ggplot(data = .)+
   geom_sf(aes(size = total))+
   theme_light()
 
+<<<<<<< HEAD
+=======
+#mapa abundancia con ggplot
+ping_plot <- nid_estaca_coord %>%
+  ggplot() +
+  geom_sf(data=perimetro, color="grey",alpha=0.6)+
+  geom_sf(aes(size = total), col="lightblue")+
+  geom_sf_text(data = nid_estaca_coord, 
+               aes(label = Sample.Label),check_overlap = F, size=3,color = "black")+
+  theme_light()+ 
+  facet_wrap(~año)+
+  labs(y = "Latitude", x = "Longitude", title = "Active nests per stake") +
+  annotation_scale(location = "br", width_hint = 0.3,  
+                   pad_x = unit(1, "cm"), pad_y = unit(0.5, "cm"))+
+  annotation_north_arrow( location = "tl", pad_x = unit(0.2, "in"), pad_y = unit(0.1, "in"),
+    style = north_arrow_fancy_orienteering)+
+  theme(axis.text.x=element_text(size = 10), axis.text.y=element_text(size = 10), 
+         axis.title.x = element_text(size=12, face="bold"), axis.title.y = element_text(size=12,face = "bold"),
+        legend.title=element_text(size=12), legend.text = element_text(size=10))
+ping_plot
+
+ggsave("pinguinera.png",ping_plot,width = 30,
+       height = 30,units = "cm" ,dpi = 600, ) #png
+
+#mapa ambiente (cueva/mata)
+#mata
+mata_plot <- nid_estaca_coord %>%
+  ggplot() +
+  geom_sf(data=perimetro, color="grey",alpha=0.8)+
+  geom_sf(aes(size = prop_mata), col="lightgreen")+
+  geom_sf_text(data = nid_estaca_coord, 
+               aes(label = Sample.Label),check_overlap = F, size=3,color = "black")+
+  theme_light()+
+  facet_wrap(~año)+
+  labs(y = "latitude", x = "longitude", title = "Ratio of bush nests per stake") +
+  theme_bw()+ 
+  annotation_scale(location = "br", width_hint = 0.3,  
+                   pad_x = unit(1, "cm"), pad_y = unit(0.5, "cm"))+
+  annotation_north_arrow( location = "tl", pad_x = unit(0.2, "in"), pad_y = unit(0.1, "in"),
+    style = north_arrow_fancy_orienteering)
+mata_plot
+
+ggsave("prop_mata.png",mata_plot,width = 30,
+       height = 30,units = "cm" ,dpi = 500, ) #png
+
+#cueva
+cueva_plot <- nid_estaca_coord %>%
+  ggplot() +
+  geom_sf(data=perimetro, color="grey",alpha=0.8)+
+  geom_sf(aes(size = prop_cueva), col="orange")+
+  geom_sf_text(data = nid_estaca_coord, 
+               aes(label = Sample.Label),check_overlap = F, size=3,color = "black")+
+  theme_light()+
+  facet_wrap(~año)+
+  labs(y = "latitude", x = "longitude", title = "Ratio of burrows per stake") +
+  theme_bw()+ 
+  annotation_scale(location = "br", width_hint = 0.3,  
+                   pad_x = unit(1, "cm"), pad_y = unit(0.5, "cm"))+
+  annotation_north_arrow( location = "tl", pad_x = unit(0.2, "in"), pad_y = unit(0.1, "in"),
+    style = north_arrow_fancy_orienteering)
+cueva_plot
+
+ggsave("prop_cueva.png",cueva_plot,width = 30,
+       height = 30,units = "cm" ,dpi = 500, ) #png
+
+
+>>>>>>> 62284a4799fb5b282ba22f12c7bc0ec184ffa141
 ```
 
