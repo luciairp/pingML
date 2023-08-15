@@ -31,7 +31,14 @@ datos_ord_20m <- datos_ord %>%
          cueva = replace_na(cueva, 0)) %>% 
   mutate(
     total = mata + cueva,
-  )
+  ) %>% 
+  ungroup()
+datos_ord_20m <- datos_ord_20m %>% 
+  add_row(Sample.Label = "42", año = 2018, mata = 0, cueva = 0, total = 0) %>% 
+  add_row(Sample.Label = "42", año = 2019, mata = 0, cueva = 0, total = 0) %>% 
+  add_row(Sample.Label = "42", año = 2021, mata = 0, cueva = 0, total = 0) %>% 
+  add_row(Sample.Label = "1", año = 2021, mata = 0, cueva = 0, total = 0)
+abc <- datos_ord_20m %>% group_by(año) %>% summarise(n= n())
 
 datos_ord_15m <- datos_ord %>% 
   filter(!is.na(tipo_nido)) %>% 
@@ -45,7 +52,15 @@ datos_ord_15m <- datos_ord %>%
          cueva = replace_na(cueva, 0)) %>% 
   mutate(
     total = mata + cueva,
-  )
+  ) %>% ungroup()
+datos_ord_15m <- datos_ord_15m %>% 
+  add_row(Sample.Label = "42", año = 2018, mata = 0, cueva = 0, total = 0) %>% 
+  add_row(Sample.Label = "42", año = 2019, mata = 0, cueva = 0, total = 0) %>% 
+  add_row(Sample.Label = "42", año = 2021, mata = 0, cueva = 0, total = 0) %>% 
+  add_row(Sample.Label = "1", año = 2021, mata = 0, cueva = 0, total = 0) %>% 
+  add_row(Sample.Label = "42", año = 2017, mata = 0, cueva = 0, total = 0) 
+
+abc <- datos_ord_15m %>% group_by(año) %>% summarise(n= n())
 
 datos_ord_10m <- datos_ord %>% 
   filter(!is.na(tipo_nido)) %>% 
@@ -59,7 +74,20 @@ datos_ord_10m <- datos_ord %>%
          cueva = replace_na(cueva, 0)) %>% 
   mutate(
     total = mata + cueva,
-  )
+  )%>% ungroup()
+datos_ord_10m <- datos_ord_10m %>% 
+  add_row(Sample.Label = "42", año = 2018, mata = 0, cueva = 0, total = 0) %>% 
+  add_row(Sample.Label = "42", año = 2019, mata = 0, cueva = 0, total = 0) %>% 
+  add_row(Sample.Label = "42", año = 2021, mata = 0, cueva = 0, total = 0) %>% 
+  add_row(Sample.Label = "1", año = 2021, mata = 0, cueva = 0, total = 0) %>% 
+  add_row(Sample.Label = "42", año = 2017, mata = 0, cueva = 0, total = 0) %>% 
+  add_row(Sample.Label = "42", año = 2015, mata = 0, cueva = 0, total = 0) %>% 
+  add_row(Sample.Label = "42", año = 2016, mata = 0, cueva = 0, total = 0) %>% 
+  add_row(Sample.Label = "1", año = 2018, mata = 0, cueva = 0, total = 0) %>% 
+  add_row(Sample.Label = "1", año = 2019, mata = 0, cueva = 0, total = 0) %>% 
+  add_row(Sample.Label = "41", año = 2019, mata = 0, cueva = 0, total = 0)
+
+abc <- datos_ord_10m %>% group_by(año) %>% summarise(n= n())
 
 # en 20 m de radio = 1256 m2 o 0.1256 ha
 res20 <- datos_ord_20m %>% 
@@ -75,7 +103,8 @@ res20 <- datos_ord_20m %>%
     ICmin.ha = media.ha - dIC.ha,
     ICmax.ha = media.ha + dIC.ha
   ) %>% 
-  select(año, n, media.ha, se.ha, ICmin.ha, ICmax.ha)
+  select(año, n, media.ha, se.ha, ICmin.ha, ICmax.ha) %>% 
+  add_column(scale = "res20")
 
 # en 15 m de radio = 706.5 m2 , 10000/706.5 es el factor = 14.15
 res15 <- datos_ord_15m %>% 
@@ -91,7 +120,8 @@ res15 <- datos_ord_15m %>%
     ICmin.ha = media.ha - dIC.ha,
     ICmax.ha = media.ha + dIC.ha
   ) %>% 
-  select(año, n, media.ha, se.ha, ICmin.ha, ICmax.ha)
+  select(año, n, media.ha, se.ha, ICmin.ha, ICmax.ha) %>% 
+  add_column(scale = "res15")
 
 # en 10 m de radio = 314.15 m2 , 10000/314.15 es el factor = 31.83 
 res10 <- datos_ord_10m %>% 
@@ -107,8 +137,24 @@ res10 <- datos_ord_10m %>%
     ICmin.ha = media.ha - dIC.ha,
     ICmax.ha = media.ha + dIC.ha
   ) %>% 
-  select(año, n, media.ha, se.ha, ICmin.ha, ICmax.ha)
+  select(año, n, media.ha, se.ha, ICmin.ha, ICmax.ha) %>% 
+  add_column(scale = "res10")
 
+restodo <- res10 %>% 
+  rows_append(res15) %>% 
+  rows_append(res20)
+
+write.csv(restodo,"res quadrat final 15 a 21.csv")
+```
+
+gráficos
+```{r}
+plot <- ggplot(restodo,aes(x = año, group = scale, y = media.ha, color = scale))+
+  scale_y_continuous(limits = c(0,0.18)*10000)+
+  geom_line(size = 1.3)+
+  geom_ribbon(aes(ymin = ICmin.ha, ymax = ICmax.ha, group = scale),
+             fill = "steelblue3", alpha = .4) +
+  theme_light()
 
 ```
 
