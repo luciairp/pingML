@@ -22,3 +22,18 @@ Comparación de valores, método distancia y quadrat count.
 Se observa que la colonia está estable en valores promedio de 1200 parejas reproductivas.
 Considerar radios más pequeños devuelve estimaciones de abundancia ligeramente mayores, ya que se revisa áreas más pequeñas donde las ausencias de nidos son menos relevantes respecto a radios mayores (área crece con el radio al cuadrado, no linealmente). Sin embargo, dada la poca pérdida de información y la gran disminución del esfuerzo que implica, no es necesario sostener radios de 20 m para contar con una buena estimación de densidad, y ese radio podría reducirse.
 Ambientes: mata cueva que 
+
+
+Versión enviada:
+Lessons from a Magellanic penguins long-term monitoring in Southern Patagonia: unified methodology, scale-dependent density and stable population trends 
+S/A
+Lucia Rodriguez-Planes 1, 2 , Ian Barbe 3 , Alejandro Valenzuela 3 , Grisel Roskos 4 , Lida Pimper 5 , Laura Malmierca 1
+(1) Administración de Parques Nacionales, Dirección Regional Patagonia Austral, Ushuaia, Argentina
+(2) Universidad Nacional de Tierra del Fuego, Antártida e Islas del Atlántico Sur, Ushuaia, Argentina
+(3) Universidad Nacional de Tierra del Fuego y Consejo Nacional de Investigaciones Científicas y Técnicas, Instituto de Ciencias Polares, Ambiente y Recursos Naturales (ICPA), Grupo de Conservación, Investigación y Manejo (CIMaF), Ushuaia, Argentina
+(4) Administración de Parques Nacionales, Parque Nacional Monte León, Puerto Santa Cruz, Argentina
+(5) Administración de Parques Nacionales, Dirección Nacional de Áreas Marinas Protegidas, Ushuaia, Argentina
+lplanes@apn.gob.ar
+The main touristic attraction of Monte León National Park (MLNP) in Patagonia (Argentina) is the colony of Magellanic penguins (Spheniscus magellanicus), which suffers predation from pumas (Puma concolor). For this reason, the colony is monitored since 2005 to assess population abundance, but using different methodologies during 10 years. Since 2015, a methodology was developed to unify the colony monitoring. Field methodology involves the counting of all nests on 44 fixed 20 m radius circular areas spaced systematically every 100 m in the entire colony, identifying number of occupied nests every concentric radii of 1 m. Total abundance is calculated using the total area of the colony from circles density. Density and abundance estimations of MLNP colony from 2015 to 2021, calculated with radii of 10, 15 and 20 m, are reported. Two analytical methods, quadrat-count and distance sampling with uniform distribution without adjustments, in R language were used. The colony showed no trend over the time, despite puma predation, with 43,764 nests in average (95% CI 31,076 - 56,452). Both methods did not show densities significant differences for each radii, with distance sampling being more time-consuming for both fieldwork and analysis. Larger radii showed significantly lower values, suggesting a tendency towards regular distribution at 20 m. Results emphasize the scale-dependent nature of density, and highlights the importance of using standardized, comparable and cost-effective methods for long-term wildlife populations monitoring.
+Administración de Parques Nacionales; CONICET; Universidad Nacional de Tierra del Fuego
+
