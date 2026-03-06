@@ -47,29 +47,183 @@ Evaluacion de la depredacion de pinguinos de Magallanes por carnivoros en el tie
 
 
 ```{r}
-library(tidyverse)
-
+library(readxl)
+library(dplyr)
+library(lubridate)
+library(ggplot2)
 ```
 
 
 ```{r cargar datos depredacion}
 
-## R Markdown
+depredacion_ping <- read_excel("depredacion_ping.xlsx")
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+#fecha como Date
+depredacion_ping$fecha <- as.Date(depredacion_ping$fecha)
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+depredacion_ping <- depredacion_ping %>%
+  mutate(
+    fecha = as.Date(fecha),
+    inicio_temp = yday(as.Date(paste0(year(fecha), "-10-24"))),
+    bloque = ((yday(fecha) - inicio_temp) %% 365) %/% 15 + 1
+  )
 
-```{r cars}
-summary(cars)
+
+#contar los NO DEPRDACION y agrupar la DEPREDACION indepentiendemente de la presencia de signos
+depredacion_ping <- depredacion_ping %>%
+  mutate(mortalidad = ifelse(causa == "no", "sin_mortalidad", "con_mortalidad"))
+
+```
+```{r cargar datos depredacion}
+
+depredacion_ping %>%
+  count(año, mortalidad)
+
+depredacion_ping %>%
+  count(año, bloque, mortalidad) %>%
+  pivot_wider(names_from = mortalidad, values_from = n, values_fill = 0)
+
+
 ```
 
-## Including Plots
+```{r depredacion grafico}
+depredacion_ping %>%
+  count(año, bloque, mortalidad) %>%
+  ggplot(aes(bloque, n, fill = mortalidad)) +
+  geom_col() +
+  facet_wrap(~año) +
+  theme_classic()
 
-You can also embed plots, for example:
+#heatmap
 
-```{r pressure, echo=FALSE}
-plot(pressure)
+
+etiquetas_bloque <- c(
+  "24 Oct–7 Nov",
+  "8 Nov–22 Nov",
+  "23 Nov–6 Dec",
+  "7 Dec–21 Dec",
+  "22 Dec–6 Jan",
+  "7 Jan–20 Jan",
+  "21 Jan–4 Feb",
+  "5 Feb–19 Feb",
+  "20 Feb–3 Mar",
+  "4 Mar–18 Mar",
+  "19 Mar–2 Apr",
+  "3 Apr–17 Apr",
+  "18 Apr–1 May"
+)
+
+depredacion_ping %>%
+  filter(causa != "no") %>%
+  count(año, bloque) %>%
+  ggplot(aes(x = factor(año), y = factor(bloque, levels = 1:13), fill = n)) +
+  geom_tile(color = "white") +
+  scale_y_discrete(labels = etiquetas_bloque) +
+  scale_fill_distiller(palette = "Reds", direction = 1) +
+  labs(
+    x = "Año",
+    y = "Periodo de la temporada",
+    fill = "Mortalidad"
+  ) +
+  theme_classic()
+
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+Descripción del procedimiento
+
+Para estimar las tasas de mortalidad y depredación en la colonia de pingüinos se utilizó la información registrada en 22 estacas de monitoreo distribuidas en un área de 2.76 ha. Los registros incluyen eventos de mortalidad asociados a diferentes causas y observaciones sin depredación.
+
+Los eventos fueron agrupados en bloques temporales de aproximadamente 15 días durante la temporada reproductiva. Debido a que la duración real de cada bloque puede variar entre años, el esfuerzo de muestreo fue calculado como el número de días efectivos de cada bloque en cada temporada.
+
+Para el análisis se definieron dos categorías de eventos:
+
+Depredación por puma: registros donde la causa fue identificada explícitamente como “puma”.
+
+Mortalidad total: todos los registros de mortalidad independientemente de la causa (incluyendo “sin signos”, “no aclara”, “no disponible”, “no sabe”), excluyendo los registros con causa “no”, que corresponden a transectas sin evidencia de depredación.
+
+Las tasas de mortalidad y depredación se calcularon como el número de eventos dividido por el esfuerzo temporal (días de monitoreo) para cada bloque y año.
+
+Posteriormente, las tasas fueron agregadas a escala anual y extrapoladas al total de la colonia considerando la duración estimada de la temporada reproductiva en tierra (180 días) y la proporción entre el área monitoreada (2.76 ha) y la superficie total de la colonia (38.4 ha).
+
+#Problema
+
+el bloque 1 tiene esfuerzo desconocido porque correspondería al período entre temporadas (cuando no hay monitoreo real). 
+1) Opción recomendada: excluir el bloque 1 de las tasas
+2) Alternativa: asignar duración estándar (15 días)
+3) Alternativa ecológicamente más correcta (muy usada)....Bloque NA: lo mantenés en los gráficos pero no lo usás para calcular tasas
+
+
+```{r Tasas mortalidad y depredacion}
+library(dplyr)
+library(lubridate)
+library(tidyr)
+
+depredacion_ping <- read_excel("depredacion_ping.xlsx")
+
+#crear categorias de causas
+depredacion_ping <- depredacion_ping %>%
+  mutate(
+    depredacion_puma = causa == "puma",
+    mortalidad = causa != "no"
+  )
+
+#calcular duracion de bloque por año
+dias_bloque <- depredacion_ping %>%
+  group_by(año, bloque) %>%
+  summarise(
+    inicio = min(fecha),
+    fin = max(fecha),
+    dias = as.numeric(difftime(fin, inicio, units = "days")) + 1,
+    .groups = "drop"
+  )
+
+#Contar eventos por bloque
+eventos_bloque <- depredacion_ping %>%
+  group_by(año, bloque) %>%
+  summarise(
+    puma = sum(depredacion_puma),
+    mortalidad = sum(mortalidad),
+    .groups = "drop"
+  )
+
+#Unir eventos y esfuerzo
+bloques <- left_join(eventos_bloque, dias_bloque,
+                     by = c("año", "bloque"))
+
+#Calcuar tasas por bloque
+bloques <- bloques %>%
+  mutate(
+    tasa_puma = puma / dias,
+    tasa_mortalidad = mortalidad / dias
+  )
+
+#Calcular tasas anuales
+tasas_anuales <- bloques %>%
+  group_by(año) %>%
+  summarise(
+    total_puma = sum(puma),
+    total_mortalidad = sum(mortalidad),
+    total_dias = sum(dias),
+    tasa_puma_anual = total_puma / total_dias,
+    tasa_mortalidad_anual = total_mortalidad / total_dias,
+    .groups = "drop"
+  )
+
+
+#Extrapolar a colonia
+#Área monitoreada = 2.76 ha
+#Área colonia = 38.4 ha
+#Duración temporada = 180 días
+
+factor_area <- 38.4 / 2.76
+
+tasas_anuales <- tasas_anuales %>%
+  mutate(
+    puma_colonia = tasa_puma_anual * 180 * factor_area,
+    mortalidad_colonia = tasa_mortalidad_anual * 180 * factor_area
+  )
+
+```
+
+
+CORREGIR CODIGO PORQUE ESTA CALCULANDO MAL LA TOTALIDAD DE LOS EVENTOS DE DEPREDACION, DE MORALIDAD Y DIAS DE MUESTREO
