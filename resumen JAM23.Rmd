@@ -1,0 +1,73 @@
+---
+title: "resumen JAM23"
+author: "Barbe I & Rodriguez Planes L"
+date: "2023-08-29"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+Predación de pinguinos de Magallanes por puma en la colonia del Parque Nacional Monte León: resultados preliminares de un caso de interacción única en el mundo.  
+
+Intro
+La colonia de pinguinos de magallanes en uno de los principales atractivos turisticos del Parque Nacional Monte Leon y es una de los valores de conservación que protege el area protegida. Desde su creacion,surgió la inquietud y preocupacion de las autoridades del PNML por la presencia de pumas incurscionando en la colonia y predando sobre individuos de la colonia. Asimismo, la presencia de pumas se registró en zonas de uso publico cercanas a la pinguinera. 
+A partir de ello se han tomado multiples medidas para proteger a la colonia (ahuyentamiento, releveamientos, etc.) y a los visitantes y la situación continua siendo monitoreada.En 2005 se inició el monitoreo activo de casos de depredacion y hasta el dia de hoy continua. EL objetivo de este trabajo es cuantificar los casos de depredacion de pinguinos por puma en el tiempo y evaluar la situacion a nivel espacial. 
+
+
+M&M
+Desde 2015, se utilizan 44 estacas para estimar la densidad de la colonia de pinguinos de magallanes. Mediante quadrant count calculamos la densidad de la colonia desde 2015 hasta 2023. Por otro lado se utilizan 22 estacas para evaluar casos de depredacion de pinguinos en la colonia. Se toman datos dentro de un radio de 20 metros y se marcan con aerosol los nuevas carcasas encontradas. Se revisan cada 15 dias desde que llega la colonia hasta que se va. Aprox octubre-abril. De esas 22 estacas se toman 10 para hacer exito reproductivo que se revisan con la mimsa periodicidad que las anteriores. Tambien se evaluó el cambio en el perimetro de la pinguinera de 2009 a 2023. 
+
+
+Resultados
+Se estimó la densidad de la colonia de pinguinos de magallenes en ZZZZ desde 2015 a 2023. Se observó un patrón similar en el perimetro de la pinguinera desde 2005 a la actualidad. 
+
+1. Mortalidad estimada por hectarea por temporada de adultos...eso se asocia a la abundancia. 
+2. Mortalidad en el tiempo 2015-2022
+
+Que porcentaje de estimados se pierden en el tiempo por puma por temporada
+
+1. pedir fechas de llegada de pinguinos a grisel
+
+
+Para charla:
+3. Mortalidad por estaca en el tiempo 2015-2022
+  3.1 Estacas de borde, cercania cañadon y uso publico
+4. Mortalidad de adultos = depredacion por puma
+
+
+Pichons y jueniles como reclutas. Van con lo de exito. Con esto va mas lo de mortalidad compensatoria. 
+
+
+La depredacion de pinguinos adultos por puma fue ZZZZ en el tiempo. Se detectaron ZZZ pichones muertos por XXX. Un total de ZZZ juveniles se registraron muertos por puma. Las estacas que sufrieron mayor extreaccion de pinguinos fueron ZZZZ ubicadas en la zona XXX de la colonia cercana a XXXX cañadones. Las estacas ZZZ fueron las que se vieron menos afectadas. Las estacas del borde sufrieron XXXX cambios y las que se ubicaron mas cerca del sendero de uso publico tuvieron una extraccion en el tiempo de ZZZZ.
+
+Conclusion
+Si bien la incursion de pumas y depredacion sobre pinguinos fue motivo de preocupacion respecto a la estabilida dde la colonia, en este trabajo vemos que esa mortalidad es compensatoria. QUeda analizar los registros de exito reproducitvo para ver el balance poblacional. 
+
+
+Definir que quiero mostrar de estas preguntas:
+4) Evaluar que pasa en el conjunto de estacas año a año desde 2015
+5) Evaluar que pasa de 2010 a 2014 con la metodologia por cuadrantes
+6) Evaluar que pasa dentro de cada estaca en el tiempo
+7) Evaluar el dato espacial de cada estaca donde la predacion se comporto segun lo no esperado
+8) Ver que paso en las estacas con mata respecto a la predacion (respecto a la proporcion mata/cueva)
+9) Ver que paso en las estacas con cueva respecto a la predacion (idem arriba)
+10) Ver que paso en las estacas borde
+11) Ver que paso en las estacas cercanas al cañadon de la muerte, cañadon del medio y sendero de turistas de la pinguinera y cercania al mar
+12) Agregar datos de exito reproductivo de 2015 a 2023
+13) Ver exito reproductivo de 2010 a 2014
+14) Ver extraccion y reemplazo de pinguinos con exito - predacion
+15) Ver que podemos hacer con los perimetros
+16) Ver la relacion de mortandad por puma con la abundancia de cada estaca. Cuando baja la abundancia, sube la mortandad? y el exito? Asi para cada estaca
+17) Que paso con adltos - juveniles - pichones en el tiempo. Y por estaca? Donde hubo mas muertes? Alguna asociacion espacial?
+
+
+13) Evaluar espacialmente las estacas en base a los siguientes criterios:
+  a) distancia al mar
+  b) distancia a cañadon cercano
+  c) distancia a senderos de uso publico
+  d) proporcion de mata/cueva
+  e) proporcion de pichon/juvenil/adulto predado
+ 

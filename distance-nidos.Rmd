@@ -17,7 +17,7 @@ library(Distance)
 
 Trabajaremos sobre el objeto que generamos en etapa anterior:
 ```{r}
-data <- read_csv2("pinguinos15-21.csv", col_types = cols(
+data <- read_csv2("pinguinos15-22.csv", col_types = cols(
    estaca = col_factor()
 )  )
 ```

@@ -1,0 +1,75 @@
+---
+title: "depredacion"
+author: "Rodriguez Planes RP & Barbe I"
+date: "2023-07-06"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Evaluacion de la depredacion de pinguinos de Magallanes por carnivoros en el tiempo
+
+1) Armar estructura de la base de datos en excel
+
+2) Corroborar que tengamos todas las planillas de depredacion
+-faltan 2019 completa
+-2018 detallada
+-algunas terminan antes
+-algunas tienen otras estacas
+
+3) Digitalizar planillas en la base de datos
+- base de datos se está limpiando
+
+4) Evaluar que pasa en el conjunto de estacas año a año desde 2015
+5) Evaluar que pasa de 2010 a 2014 con la metodologia por cuadrantes NO
+6) Evaluar que pasa dentro de cada estaca en el tiempo
+7) Evaluar el dato espacial de cada estaca donde la predacion se comporto segun lo no esperado
+8) Ver que paso en las estacas con mata respecto a la predacion (respecto a la proporcion mata/cueva)
+9) Ver que paso en las estacas con cueva respecto a la predacion (idem arriba)
+10) Ver que paso en las estacas borde
+11) Ver que paso en las estacas cercanas al cañadon de la muerte, cañadon del medio y sendero de turistas de la pinguinera y cercania al mar
+8) Agregar datos de exito reproductivo de 2015 a 2023
+9) Ver exito reproductivo de 2010 a 2014
+10) Ver extraccion y reemplazo de pinguinos con exito - predacion
+11) Ver que podemos hacer con los perimetros
+12) Ver la relacion de mortandad por puma con la abundancia de cada estaca. Cuando baja la abundancia, sube la mortandad? y el exito? Asi para cada estaca
+
+
+6) Evaluar espacialmente las estacas en base a los siguientes criterios:
+  a) distancia al mar
+  b) distancia a cañadon cercano
+  c) distancia a senderos de uso publico
+  d) proporcion de mata/cueva
+  e) proporcion de pichon/juvenil/adulto predado
+ 
+
+
+```{r}
+library(tidyverse)
+
+```
+
+
+```{r cargar datos depredacion}
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+summary(cars)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
