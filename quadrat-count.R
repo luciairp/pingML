@@ -1,0 +1,136 @@
+library(tidyverse)
+library(forcats)
+
+cruda <- read.csv("nidos_2015-2025.csv")
+
+# variables:
+# yr de inicio de temporada
+# estaca 1 a 44
+# dist metro superior de registro - hasta 20
+# tipo si en mata o en cueva - a veces NA
+# nidos cantidad registrada a esa distancia
+
+# confirmo que esté todo bien
+str(cruda)
+unique(cruda$yr)
+unique(cruda$estaca)
+unique(cruda$tipo)
+
+# Construyo tabla que tiene suma de nidos totales
+# para poder estimar abundancia según Krebs (quadrat-count) necesito:
+# todas las estacas en todos los años con valor de nidos
+# 9 años * 44 estacas = 396 filas
+
+nidos <- cruda %>% 
+  select(yr, estaca, nidos) %>% 
+  complete(yr, estaca, fill = list(nidos = 0)) %>% 
+  filter(!(estaca == 42 & yr %in% c(2021,2022,2023,2024))) %>% 
+  filter(!(estaca == 1 & yr %in% c(2023, 2024))) %>% 
+  group_by(yr, estaca) %>% 
+  summarise(total = sum(nidos)) 
+
+# estimacion de densidad
+# en 20 m de radio = 1256 m2 o 0.1256 ha
+# 10000 m2 (1 ha) / 1256 m2 = estimación por parcela * 7.96 
+dens <- nidos %>% 
+  group_by(yr) %>% 
+  summarise(
+    n = n(),
+    media = mean(total),
+    media.ha = mean(total)*7.96,
+    sd = sd(total),
+    sd.ha = sd*7.96,
+    se.ha = (sd/sqrt(n))*7.96,
+    dIC.ha = se.ha * qt((1-0.05)/2 + .5, n-1), # = a decir 1.96 * se
+    ICmin.ha = media.ha - dIC.ha,
+    ICmax.ha = media.ha + dIC.ha
+  ) %>% 
+  add_row(yr = 2020, n = 44 , media = NA, media.ha = NA,
+          sd = NA, sd.ha = NA, se.ha = NA, dIC.ha = NA,
+          ICmin.ha = NA, ICmax.ha = NA) %>% 
+ arrange(yr)
+
+# figurita
+plot <- ggplot(dens,aes(x = yr, y = media.ha))+
+  scale_x_continuous(breaks = unique(dens$yr),
+                     labels = c("s15-16","s16-17","s17-18","s18-19",
+                                "s19-20","s20-21","s21-22","s22-23",
+                                "s23-24","s24-25"))+
+  labs(x = NULL)+ labs(y = "Mean pair density (hectare)")+
+  scale_y_continuous(limits = c(0,0.18)*10000)+
+  geom_line(linewidth = 1.2)+
+  geom_errorbar(
+    aes(ymin = ICmin.ha, ymax = ICmax.ha),
+    color = "black",width = 0.15)+
+  #geom_ribbon(aes(ymin = ICmin.ha, ymax = ICmax.ha),
+  #            fill = "steelblue3", alpha = .4) +
+  theme_classic(base_size = 10) 
+    theme(
+      strip.background = element_rect(fill = "grey85", color = "black"),
+      strip.text = element_text(size = 10, face = "bold")
+    )
+  
+# abundance
+    
+areas <- read.table("areas colonia.txt", header = T) %>% 
+  mutate(areas.ha = aream2/10000,
+         areas.ha.unif = aream2unif/10000,
+         yr = temporada)
+mean(areas$areas.ha[areas$temporada == 2014],areas$areas.ha[areas$temporada == 2016])
+# 34.98983
+mean(areas$areas.ha[areas$temporada == 2017],areas$areas.ha[areas$temporada == 2017])
+# 35.30128
+
+mean(areas$areas.ha.unif[areas$temporada == 2014],areas$areas.ha.unif[areas$temporada == 2016])
+# 36.84525
+mean(areas$areas.ha.unif[areas$temporada == 2017],areas$areas.ha.unif[areas$temporada == 2017])
+# 36.44669
+
+abund <- left_join(dens,areas,by = "yr") %>% 
+  mutate(areas.ha = replace(areas.ha, yr == 2015,34.98983),
+         areas.ha = replace(areas.ha, yr == 2018,35.30128),
+         abund.ha = media.ha * areas.ha,
+         areas.ha.unif = replace(areas.ha.unif, yr == 2015,36.84525),
+         areas.ha.unif = replace(areas.ha.unif, yr == 2018,36.44669),
+         abund.ha.unif = media.ha * areas.ha.unif,
+         sd.ab = sd.ha * areas.ha.unif,
+         se.ab = se.ha * areas.ha.unif,
+         ICmin.ab = ICmin.ha * areas.ha.unif,
+         ICmax.ab = ICmax.ha * areas.ha.unif) %>% 
+  select(yr,n,media.ha, areas.ha.unif,abund.ha.unif,
+         sd.ab,se.ab,ICmin.ab,ICmax.ab)
+
+plot(abund$yr,abund$abund.ha.unif,ylim = c(0,70000))
+plot(areas$yr,areas$areas.ha.unif,ylim = c(0,44))
+
+plot <- ggplot(abund,aes(x = yr, y = abund.ha.unif))+
+  scale_x_continuous(breaks = unique(abund$yr),
+                     labels = c("s15-16","s16-17","s17-18","s18-19",
+                                "s19-20","s20-21","s21-22","s22-23",
+                                "s23-24","s24-25"))+
+  labs(x = NULL)+ labs(y = "Pair abundance")+
+  scale_y_continuous(limits = c(0,7.5)*10000)+
+  geom_line(linewidth = 1.2)+
+  geom_errorbar(
+    aes(ymin = ICmin.ab, ymax = ICmax.ab),
+    color = "black",width = 0.15)+
+  #geom_ribbon(aes(ymin = ICmin.ha, ymax = ICmax.ha),
+  #            fill = "steelblue3", alpha = .4) +
+  theme_classic(base_size = 10) 
+theme(
+  strip.background = element_rect(fill = "grey85", color = "black"),
+  strip.text = element_text(size = 10, face = "bold")
+)
+
+
+
+############ solo con 37 estacas que siempre estuvieron dentro de la colonia
+nidos <- cruda %>% 
+  select(yr, estaca, nidos) %>% 
+  complete(yr, estaca, fill = list(nidos = 0)) %>% 
+  filter(!(estaca == 1 | estaca ==  2 | estaca == 5 |
+            estaca == 33 |
+             estaca == 41 | estaca ==42)) %>% 
+  group_by(yr, estaca) %>% 
+  summarise(total = sum(nidos)) 
+
