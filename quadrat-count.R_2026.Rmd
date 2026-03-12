@@ -1,11 +1,13 @@
 ---
-title: "Untitled"
+title: "abundancia paper 2026"
 output: github_document
 ---
 
 ```{r setup, include=FALSE}
 library(tidyverse)
 library(forcats)
+
+
 ```
 
 temporada	aream2	aream2unif
@@ -24,6 +26,9 @@ temporada	aream2	aream2unif
 
 
 ```{r }
+
+cruda <- read_xlsx("nidos_2015-2025.xlsx")
+
 # variables:
 # yr de inicio de temporada
 # estaca 1 a 44
@@ -37,13 +42,12 @@ unique(cruda$yr)
 unique(cruda$estaca)
 unique(cruda$tipo)
 
-
 # Construyo tabla que tiene suma de nidos totales
 # para poder estimar abundancia según Krebs (quadrat-count) necesito:
 # todas las estacas en todos los años con valor de nidos
 # 9 años * 44 estacas = 396 filas
 
-nidos <- cruda %>% 
+nidos1 <- cruda %>% 
   select(yr, estaca, nidos) %>% 
   complete(yr, estaca, fill = list(nidos = 0)) %>% 
   filter(!(estaca == 42 & yr %in% c(2021,2022,2023,2024))) %>% 
@@ -51,11 +55,23 @@ nidos <- cruda %>%
   group_by(yr, estaca) %>% 
   summarise(total = sum(nidos)) 
 
+############ solo con 37 estacas que siempre estuvieron dentro de la colonia
+nidos2 <- cruda %>% 
+  select(yr, estaca, nidos) %>% 
+  complete(yr, estaca, fill = list(nidos = 0)) %>% 
+  filter(!(estaca == 1 | estaca ==  2 | estaca == 5 |
+            estaca == 33 |
+             estaca == 41 | estaca ==42)) %>% 
+  group_by(yr, estaca) %>% 
+  summarise(total = sum(nidos)) 
+
+
+
 
 # estimacion de densidad
 # en 20 m de radio = 1256 m2 o 0.1256 ha
 # 10000 m2 (1 ha) / 1256 m2 = estimación por parcela * 7.96 
-dens <- nidos %>% 
+dens <- nidos2 %>% 
   group_by(yr) %>% 
   summarise(
     n = n(),
@@ -79,23 +95,33 @@ dens <- nidos %>%
 ```{r}
 # figurita
 plot <- ggplot(dens,aes(x = yr, y = media.ha))+
-  scale_x_continuous(breaks = unique(dens$yr),
-                     labels = c("s15-16","s16-17","s17-18","s18-19",
-                                "s19-20","s20-21","s21-22","s22-23",
-                                "s23-24","s24-25"))+
+ scale_x_continuous(breaks = unique(dens$yr),
+                   labels = c("s15-16","s16-17","s17-18","s18-19",
+                            "s19-20","s20-21","s21-22","s22-23",
+                               "s23-24","s24-25","s25-26"))+
   labs(x = NULL)+ labs(y = "Mean pair density (hectare)")+
-  scale_y_continuous(limits = c(0,0.18)*10000)+
+  scale_y_continuous(limits = c(0,0.18)*10000,
+                     breaks = seq(0, 1800, by = 200))+
   geom_line(linewidth = 1.2)+
   geom_errorbar(
     aes(ymin = ICmin.ha, ymax = ICmax.ha),
     color = "black",width = 0.15)+
   #geom_ribbon(aes(ymin = ICmin.ha, ymax = ICmax.ha),
   #            fill = "steelblue3", alpha = .4) +
-  theme_classic(base_size = 10) 
+  theme_classic(base_size = 10) +
     theme(
       strip.background = element_rect(fill = "grey85", color = "black"),
       strip.text = element_text(size = 10, face = "bold")
     )
+  plot
+  
+  ggsave("Fig_densidad_pinguinos.png", 
+       plot = plot,
+       width = 7, 
+       height = 5, 
+       dpi = 300,
+       units = "in",
+       bg = "white")
   
 ```
 
@@ -111,7 +137,6 @@ mean(areas$areas.ha[areas$temporada == 2014],areas$areas.ha[areas$temporada == 2
 # 34.98983
 mean(areas$areas.ha[areas$temporada == 2017],areas$areas.ha[areas$temporada == 2017])
 # 35.30128
-
 mean(areas$areas.ha.unif[areas$temporada == 2014],areas$areas.ha.unif[areas$temporada == 2016])
 # 36.84525
 mean(areas$areas.ha.unif[areas$temporada == 2017],areas$areas.ha.unif[areas$temporada == 2017])
@@ -134,34 +159,35 @@ abund <- left_join(dens,areas,by = "yr") %>%
 plot(abund$yr,abund$abund.ha.unif,ylim = c(0,70000))
 plot(areas$yr,areas$areas.ha.unif,ylim = c(0,44))
 
+#plot final
 plot <- ggplot(abund,aes(x = yr, y = abund.ha.unif))+
   scale_x_continuous(breaks = unique(abund$yr),
                      labels = c("s15-16","s16-17","s17-18","s18-19",
                                 "s19-20","s20-21","s21-22","s22-23",
-                                "s23-24","s24-25"))+
+                                "s23-24","s24-25","s25-26"))+
   labs(x = NULL)+ labs(y = "Pair abundance")+
-  scale_y_continuous(limits = c(0,7.5)*10000)+
+  scale_y_continuous(limits = c(0,7.5)*10000,
+                     breaks = seq(0, 70000, by = 10000))+
   geom_line(linewidth = 1.2)+
   geom_errorbar(
     aes(ymin = ICmin.ab, ymax = ICmax.ab),
     color = "black",width = 0.15)+
   #geom_ribbon(aes(ymin = ICmin.ha, ymax = ICmax.ha),
   #            fill = "steelblue3", alpha = .4) +
-  theme_classic(base_size = 10) 
+  theme_classic(base_size = 10) +
 theme(
   strip.background = element_rect(fill = "grey85", color = "black"),
   strip.text = element_text(size = 10, face = "bold")
 )
+plot
+
+ggsave("Fig_abundancia_pinguinos_38.pdf", 
+       plot = plot,
+       width = 7, 
+       height = 5, 
+       dpi = 300,
+       units = "in",
+       bg = "white")
 
 
-
-############ solo con 37 estacas que siempre estuvieron dentro de la colonia
-nidos <- cruda %>% 
-  select(yr, estaca, nidos) %>% 
-  complete(yr, estaca, fill = list(nidos = 0)) %>% 
-  filter(!(estaca == 1 | estaca ==  2 | estaca == 5 |
-            estaca == 33 |
-             estaca == 41 | estaca ==42)) %>% 
-  group_by(yr, estaca) %>% 
-  summarise(total = sum(nidos)) 
 ```

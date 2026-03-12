@@ -822,9 +822,9 @@ Asumimos que:
 - Todos los eventos de mortalidad en la colonia son por puma directa o indirectamente, entonces vamos a agrupar las causas
 - En 22 estacas tenemos 27646 metros cuadrados= 2,76 ha
 -En 21 estacas hay 26397 metros cuadrados=2,64 ha
-- Toda la colonia tiene 38,4 ha
+- Llevar el área de las 21 estacas de cada año al área total estimada en cada año
 - En algunos temporadas tuvimos menos dias de relevamiento porque hay bloques donde no se muestreó: ej 97 dias 2015, 70 dias 2017, 150 dias 2016,177 en 2021
-- Entonces calculamos el promedio de eventos de depredacion por dia real de relevmaiento para 22 estacas
+- Entonces calculamos el promedio de eventos de depredacion por dia real de relevmaiento para 21 estacas
 - Ese valor lo extrapolamos a toda la colonia (38,4 ha)
 - Ese valor de depredacion por dia lo extrapolamos a los 180 dias que dura el período reproductivo (nuestro maximo llega a 177 en 2021)
 
@@ -910,8 +910,39 @@ resumen_temporada <- bloque_todos_ajustado %>%
 
 ```
 
-Extrapolamos a 38,4 ha
+Extrapolamos al area de cada temporada
 
+```{r area de cada año }
+# areas de la colonia en el tiempo
+    
+areas <- read.table("areas colonia.txt", header = T) %>% 
+  mutate(areas.ha = aream2/10000,
+         areas.ha.unif = aream2unif/10000,
+         yr = temporada)
+mean(areas$areas.ha[areas$temporada == 2014],areas$areas.ha[areas$temporada == 2016])
+# 34.98983
+mean(areas$areas.ha[areas$temporada == 2017],areas$areas.ha[areas$temporada == 2017])
+# 35.30128
+mean(areas$areas.ha.unif[areas$temporada == 2014],areas$areas.ha.unif[areas$temporada == 2016])
+# 36.84525
+mean(areas$areas.ha.unif[areas$temporada == 2017],areas$areas.ha.unif[areas$temporada == 2017])
+# 36.44669
+
+abund <- left_join(dens,areas,by = "yr") %>% 
+  mutate(areas.ha = replace(areas.ha, yr == 2015,34.98983),
+         areas.ha = replace(areas.ha, yr == 2018,35.30128),
+         abund.ha = media.ha * areas.ha,
+         areas.ha.unif = replace(areas.ha.unif, yr == 2015,36.84525),
+         areas.ha.unif = replace(areas.ha.unif, yr == 2018,36.44669),
+         #abundancia
+         abund.ha.unif = media.ha * areas.ha.unif,
+         sd.ab = sd.ha * areas.ha.unif,
+         se.ab = se.ha * areas.ha.unif,
+         ICmin.ab = ICmin.ha * areas.ha.unif,
+         ICmax.ab = ICmax.ha * areas.ha.unif) %>% 
+  select(yr,n,media.ha, areas.ha.unif,abund.ha.unif,
+         sd.ab,se.ab,ICmin.ab,ICmax.ab)v
+```
 
 ```{r Tasas extrapoladas a la colonia}
 
@@ -919,24 +950,28 @@ Extrapolamos a 38,4 ha
 
 # Parámetros de la colonia
 area_muestreada <- 2.64  # hectáreas (21 estacas)
-area_total_colonia <- 38.4  # hectáreas (toda la colonia)
-factor_extrapolacion <- area_total_colonia / area_muestreada
 
-# EXTRAPOLAR TASAS A TODA LA COLONIA ----------
-
+# UNIR CON LOS DATOS DE ÁREA POR AÑO
 resumen_extrapolado <- resumen_temporada %>%
+  left_join(
+    abund %>% select(yr, areas.ha.unif), 
+    by = c("temporada" = "yr")  # Relacionar temporada con cada año. En 2015 se uso el promedio del area de 2014 y 2016 y en 2018 se uso la media de 2017 y 2019
+  )%>%
   mutate(
-     tasa_mortalidad_puma_colonia = tasa_mortalidad_total_puma * factor_extrapolacion,    # Tasa en colonia = Tasa observada * (Área colonia / Área muestreada)
-    eventos_mortalidad_puma_temporada = tasa_mortalidad_puma_colonia * total_dias_muestreo, # Eventos totales en la colonia por temporada
-      area_muestreada_ha = area_muestreada,  area_colonia_ha = area_total_colonia, factor_extrapolacion = factor_extrapolacion  # Agregar columnas informativas
+      factor_extrapolacion = areas.ha.unif / area_muestreada, # Factor de extrapolación específico para cada año
+    tasa_mortalidad_puma_colonia = tasa_mortalidad_total_puma * factor_extrapolacion,  # Tasa de mortalidad extrapolada a toda la colonia
+      eventos_mortalidad_puma_temporada = tasa_mortalidad_puma_colonia * total_dias_muestreo,     # Eventos totales de mortalidad en la colonia por temporada
+    area_muestreada_ha = area_muestreada, #area de estacas en ha
+    area_colonia_ha = areas.ha.unif  # area de colonia por año en ha
   ) %>%
   select(
-    temporada, categoria,   mortalidad_total_puma, tasa_mortalidad_total_puma, tasa_mortalidad_puma_colonia,
-    eventos_mortalidad_puma_temporada,total_dias_muestreo, n_bloques,  area_muestreada_ha, area_colonia_ha, factor_extrapolacion
+    temporada, categoria, 
+    mortalidad_total_puma, tasa_mortalidad_total_puma, 
+    tasa_mortalidad_puma_colonia, eventos_mortalidad_puma_temporada,
+    total_dias_muestreo, n_bloques, 
+    area_muestreada_ha, area_colonia_ha, factor_extrapolacion
   ) %>%
   arrange(temporada, categoria)
-
-print(resumen_extrapolado)
 
 ```
 
@@ -964,11 +999,9 @@ resumen_180_dias <- resumen_extrapolado %>%
   ) %>%
   arrange(temporada, categoria)
 
-print(resumen_180_dias)
-
 ```
 
-```{r Tabla final}
+```{r Tabla depredacion final}
 
 # RESUMEN FINAL: PINGÜINOS MUERTOS ESTIMADOS POR temporada
 # (Extrapolado a 180 días y toda la colonia)
@@ -987,9 +1020,6 @@ resumen_final_pinguinos <- resumen_180_dias %>%
   ) %>%
   arrange(temporada, Categoría)
 
-print(resumen_final_pinguinos)
-
-
 # TABLA PIVOTEADA: temporadaS EN FILAS, CATEGORÍAS EN COLUMNAS
 
 
@@ -999,9 +1029,6 @@ tabla_pinguinos_wide <- resumen_final_pinguinos %>%
     values_from = `Pingüinos muertos estimados`
   ) %>%
   arrange(temporada)
-
-print(tabla_pinguinos_wide)
-
 
 # SOLO CATEGORÍAS POR EDAD CON TOTALES Y PROMEDIOS
 
@@ -1050,7 +1077,7 @@ print(tabla_completa)
 
 #write.csv(tabla_completa, "pinguinos_muertos_por_edad_completo.csv", row.names = FALSE)
 ```
-```{r Garfico Tabla final}
+```{r Garfico depredacion final}
 # GRAFICO -------------------------------------------------------------------------------------------------------------------------------------
 
 # Preparar datos para graficar (sin TOTAL y Promedio)
@@ -1083,7 +1110,7 @@ datos_sin_total <- datos_grafico %>%
 
 
 
-# 1- Barras apiladas por temporada
+# 1- Barras apiladas por temporada -------------------------
 grafico_1 <- ggplot(datos_sin_total, aes(x = temporada, y = Pingüinos, fill = Categoría)) +
   geom_bar(stat = "identity", position = "stack", na.rm = TRUE) +  # na.rm = TRUE para ignorar NAs
   geom_text(aes(label = ifelse(!is.na(Pingüinos), round(Pingüinos, 0), "")), 
@@ -1109,7 +1136,7 @@ grafico_1 <- ggplot(datos_sin_total, aes(x = temporada, y = Pingüinos, fill = C
 
 print(grafico_1)
 
-# 2- Líneas mostrando tendencia temporal
+# 2- Líneas mostrando tendencia temporal --------------------
 grafico_2 <- ggplot(datos_sin_total, aes(x = año_inicial, y = Pingüinos, color = Categoría, group = Categoría)) +
   geom_line(size = 1.2) +
   geom_point(size = 3) +
@@ -1137,9 +1164,121 @@ grafico_2 <- ggplot(datos_sin_total, aes(x = año_inicial, y = Pingüinos, color
 print(grafico_2)
 
 
-# ggsave("grafico_barras_apiladas.png", grafico_1, width = 10, height = 6, dpi = 300)
-# ggsave("grafico_lineas_tendencia.png", grafico_2, width = 10, height = 6, dpi = 300)
+ggsave("depredacion temporal.jpeg", grafico_2, width = 10, height = 6, dpi = 300)
 
 
+
+
+
+```
+
+```{r Depredacion sobre abundancia}
+
+# Preparar datos de depredación (solo adultos)
+depred_adultos <- resumen_final_pinguinos %>%
+  filter(Categoría == "Adultos") %>%
+  mutate(
+    yr = as.numeric(substr(temporada, 1, 4))  # Extraer año inicial (ej: 2015 de "2015-2016")
+  ) %>%
+  select(yr, depredacion = `Pingüinos muertos estimados`)
+
+# Unir con abundancia y calcular porcentaje
+porcentaje_depredacion <- abund %>%
+  left_join(depred_adultos, by = "yr") %>%
+  mutate(
+    porcentaje_depredacion = (depredacion / abund.ha.unif) * 100,
+    temporada = paste0(yr, "-", yr + 1)
+  ) %>%
+  filter(!is.na(porcentaje_depredacion)) %>%  # Eliminar años sin datos
+  select(temporada, yr, abund.ha.unif, depredacion, porcentaje_depredacion)
+
+print(porcentaje_depredacion)
+
+
+# GRÁFICO DE PORCENTAJE DE DEPREDACIÓN  --------
+
+plot_porcentaje <- ggplot(datos_combinados %>% filter(!is.na(porcentaje_depredacion)), 
+                          aes(x = yr, y = porcentaje_depredacion)) +
+  geom_line(linewidth = 1, color = "black") +
+  geom_point(size = 2, color = "black") +
+  scale_x_continuous(
+    breaks = unique(datos_combinados$yr[!is.na(datos_combinados$porcentaje_depredacion)]),
+    labels = c("s15-16", "s16-17", "s17-18", "s18-19",
+               "s19-20", "s21-22", "s22-23", "s24-25", "s25-26")
+  ) +
+  scale_y_continuous(
+    limits = c(0, max(datos_combinados$porcentaje_depredacion, na.rm = TRUE) * 1.1),
+    breaks = seq(0, 10, by = 1)
+  ) +
+  labs(
+    x = "Season",
+    y = "Predation rate (% / pair abundance)"
+  ) +
+  theme_classic(base_size = 10) +
+  theme(
+    strip.background = element_rect(fill = "grey85", color = "black"),
+    strip.text = element_text(size = 10, face = "bold")
+  )
+
+plot_porcentaje
+
+ggsave("depredacion_abundancia.jpeg", plot_porcentaje, width = 10, height = 6, dpi = 300)
+
+
+# GRÁFICO DE PORCENTAJE DE DEPREDACIÓN y ABUNDANCIA COMBINADO --------
+
+# Unir datos de abundancia con porcentaje de depredación
+datos_combinados <- abund %>%
+  left_join(depred_adultos, by = "yr") %>%
+  mutate(
+    porcentaje_depredacion = (depredacion / abund.ha.unif) * 100
+  )
+
+# Calcular factor de escala para el segundo eje
+max_abund <- max(datos_combinados$abund.ha.unif, na.rm = TRUE)
+max_porc <- max(datos_combinados$porcentaje_depredacion, na.rm = TRUE)
+factor_escala <- max_abund / max_porc
+
+plot <- ggplot(datos_combinados, aes(x = yr)) +
+  # Abundancia (línea y barras de error)
+  geom_line(aes(y = abund.ha.unif), linewidth = 1.2, color = "black") +
+  geom_errorbar(
+    aes(ymin = ICmin.ab, ymax = ICmax.ab),
+    color = "black", width = 0.15
+  ) +
+  # Porcentaje de depredación (barras)
+  geom_col(
+    aes(y = porcentaje_depredacion * factor_escala),
+    fill = "grey60", alpha = 0.6, width = 0.6
+  ) +
+  # Escalas
+  scale_x_continuous(
+    breaks = unique(datos_combinados$yr),
+    labels = c("s15-16", "s16-17", "s17-18", "s18-19",
+               "s19-20", "s20-21", "s21-22", "s22-23",
+               "s23-24", "s24-25", "s25-26")
+  ) +
+  scale_y_continuous(
+    limits = c(0, 75000),
+    breaks = seq(0, 70000, by = 10000),
+    labels = scales::comma,
+    name = "Pair abundance",
+    sec.axis = sec_axis(
+      ~ . / factor_escala,
+      name = "Predation rate (%)",
+      breaks = seq(0, 10, by = 1)
+    )
+  ) +
+  labs(x = NULL) +
+  theme_classic(base_size = 10) +
+  theme(
+    strip.background = element_rect(fill = "grey85", color = "black"),
+    strip.text = element_text(size = 10, face = "bold"),
+    axis.title.y.right = element_text(color = "black"),
+    axis.text.y.right = element_text(color = "black")
+  )
+
+plot
+ggsave("depredacion_abundancia_combinada.jpeg", plot, width = 10, height = 6, dpi = 300)
 
 ```
