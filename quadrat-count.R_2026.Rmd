@@ -55,7 +55,7 @@ nidos1 <- cruda %>%
   group_by(yr, estaca) %>% 
   summarise(total = sum(nidos)) 
 
-############ solo con 37 estacas que siempre estuvieron dentro de la colonia
+############ solo con 38 estacas que siempre estuvieron dentro de la colonia
 nidos2 <- cruda %>% 
   select(yr, estaca, nidos) %>% 
   complete(yr, estaca, fill = list(nidos = 0)) %>% 
@@ -64,8 +64,6 @@ nidos2 <- cruda %>%
              estaca == 41 | estaca ==42)) %>% 
   group_by(yr, estaca) %>% 
   summarise(total = sum(nidos)) 
-
-
 
 
 # estimacion de densidad
@@ -135,11 +133,11 @@ areas <- read.table("areas colonia.txt", header = T) %>%
          yr = temporada)
 mean(areas$areas.ha[areas$temporada == 2014],areas$areas.ha[areas$temporada == 2016])
 # 34.98983
-mean(areas$areas.ha[areas$temporada == 2017],areas$areas.ha[areas$temporada == 2017])
+mean(areas$areas.ha[areas$temporada == 2017],areas$areas.ha[areas$temporada == 2019])
 # 35.30128
 mean(areas$areas.ha.unif[areas$temporada == 2014],areas$areas.ha.unif[areas$temporada == 2016])
 # 36.84525
-mean(areas$areas.ha.unif[areas$temporada == 2017],areas$areas.ha.unif[areas$temporada == 2017])
+mean(areas$areas.ha.unif[areas$temporada == 2017],areas$areas.ha.unif[areas$temporada == 2019])
 # 36.44669
 
 abund <- left_join(dens,areas,by = "yr") %>% 

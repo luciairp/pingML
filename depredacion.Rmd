@@ -160,7 +160,9 @@ depredacion_ping <- depredacion_ping %>%
     anio <-year(fecha),
     mes_dia = format(fecha, "%m-%d"),
     
-    # Asignar bloques según rangos de fechas
+    
+    
+# Asignar bloques según rangos de fechas
     bloque_relativo2 = case_when(
       mes_dia >= "10-23" & mes_dia <= "11-07" ~ 1,
       mes_dia >= "11-08" & mes_dia <= "11-22" ~ 2,
@@ -181,7 +183,6 @@ depredacion_ping <- depredacion_ping %>%
   ) %>%
   select(-mes_dia)  # Eliminar columna auxiliar
 
-
 #Arreglar la columna mortalidad
 #contar los NO DEPRDACION y agrupar la DEPREDACION indepentiendemente de la presencia de signos
 depredacion_ping <- depredacion_ping %>%
@@ -199,11 +200,20 @@ depredacion_ping <- depredacion_ping %>%
     edad %in% c("pichon", "pichón") ~ "pichon",
     edad == "juvenil" ~ "juvenil",
     edad == "no" ~ "no",  # Mantener "no" (sin depredación)
-    edad %in% c("no dice", NA) ~ NA_character_  # Solo "no dice" y NA se vuelven NA
+    edad %in% c("no dice","s/d", NA) ~ NA_character_  # Solo "no dice" y NA se vuelven NA
   ))
 
 # Verificar
 unique(depredacion_ping$edad)
+
+#Reasignar manualmente el bloque 9 de 2024 para que no quede agrupado con el bloque 8. Deberia haberse empezado el 20 de febrero, no el 19. 
+depredacion_ping <- depredacion_ping %>%
+  mutate(
+    bloque_relativo2 = case_when(
+      fecha == as.Date("2025-02-19") ~ 9,
+      TRUE ~ bloque_relativo2
+    )
+  )
 
 
 ```
@@ -351,7 +361,7 @@ datos_heatmap <- depredacion_ping %>%
                        labels = c("Adultos", "Juveniles", "Pichones")))
 
 # Un solo gráfico con facetas y colores diferenciados
-datos_heatmap %>%
+plot <-datos_heatmap %>%
   ggplot(aes(x = factor(temporada), y = factor(bloque_relativo2, levels = 1:13))) +
   # Capa 1: NA (no muestreado) en celeste claro
   geom_tile(data = . %>% filter(is.na(n)), 
@@ -364,18 +374,34 @@ datos_heatmap %>%
             aes(fill = n), color = "white") +
   scale_fill_distiller(palette = "Reds", direction = 1, 
                        name = "Individuos\ndepredados") +
-  scale_y_discrete(labels = etiquetas_bloque) +
+  scale_y_discrete(
+  labels = etiquetas_bloque,
+  limits = as.character(1:13)  # MUY importante para mantener el orden
+)+
+ scale_x_discrete(labels = c(
+  "2015" = "2015/2016",
+  "2016" = "2016/2017",
+  "2017" = "2017/2018",
+  "2018" = "2018/2019",
+  "2019" = "2019/2020",
+  "2021" = "2021/2022",
+  "2022"= "2022/2023",
+  "2023"="2023/2024",
+  "2024"="2024/2025",
+  "2025"="2025/2026"
+)) +
   facet_wrap(~edad, ncol = 1) +
   labs(x = "temporada", y = "Periodo de la temporada", 
-       title = "Pingüinos depredados por puma en 21 estacas por bloque temporal") +
+       title = "Pingüinos depredados por puma en 21 estacas por bloque temporal. NA=blanco; 0=gris") +
   theme_classic() +
   theme(
     strip.background = element_rect(fill = "lightblue"),
     strip.text = element_text(face = "bold", size = 11)
   )
 
+plot
 
-
+ggsave("depredacion_por_bloques.jpeg", plot = plot, width = 10, height = 6, dpi = 300)
 
 ```
 
@@ -402,6 +428,10 @@ el bloque 1 tiene esfuerzo desconocido porque correspondería al período entre 
 2) Alternativa: asignar duración estándar (15 días)
 3) Alternativa ecológicamente más correcta (muy usada)....Bloque NA: lo mantenés en los gráficos pero no lo usás para calcular tasas
 
+
+Si tengo que contar la comparacion entre bloques relativos, va esta metodologia: 
+
+Time was standardized into discrete sampling intervals (“blocks”) of approximately 15 days within each reproductive season. Each season was defined from November to March and assigned a single “season” identifier (e.g., 2024), regardless of spanning two calendar years. Blocks were numbered sequentially within each season (e.g., Block 1 = early November), allowing temporal comparisons of depredation events across seasons. Because seasons span two calendar years, block assignment was based on continuous dates rather than calendar year. All assignments were cross-checked, and minor inconsistencies were manually corrected when necessary to maintain temporal accuracy.
 
 ```{r Eventos de depredacion por bloque y dias de cada bloque}
 
@@ -824,9 +854,9 @@ Asumimos que:
 -En 21 estacas hay 26397 metros cuadrados=2,64 ha
 - Llevar el área de las 21 estacas de cada año al área total estimada en cada año
 - En algunos temporadas tuvimos menos dias de relevamiento porque hay bloques donde no se muestreó: ej 97 dias 2015, 70 dias 2017, 150 dias 2016,177 en 2021
-- Entonces calculamos el promedio de eventos de depredacion por dia real de relevmaiento para 21 estacas
-- Ese valor lo extrapolamos a toda la colonia (38,4 ha)
-- Ese valor de depredacion por dia lo extrapolamos a los 180 dias que dura el período reproductivo (nuestro maximo llega a 177 en 2021)
+- Entonces calculamos el promedio de eventos de depredacion por dia real de relevmaiento para 21 estacas obteniendo una tasa de depredacion
+- Esa tasa la extrapolamos a toda la colonia para cada año a partir de la superficie estimada cada año
+- Esa tasa de depredacion (por dia)eventos por dia) lo extrapolamos a los 180 dias que dura el período reproductivo (nuestro maximo llega a 177 en 2021) obteninedo un numero esperado de eventos en 180 dias (eventos/temporada)
 
 
 
@@ -910,9 +940,48 @@ resumen_temporada <- bloque_todos_ajustado %>%
 
 ```
 
+Incorporamos la densidad de pinguinos por ha., estimada a artir de las 38 estacas core y extrapolada a la superficie de la colonia de cada año
+```{r }
+
+cruda <- read_xlsx("nidos_2015-2025.xlsx")
+
+#solo con 38 estacas que siempre estuvieron dentro de la colonia
+nidos2 <- cruda %>% 
+  select(yr, estaca, nidos) %>% 
+  complete(yr, estaca, fill = list(nidos = 0)) %>% 
+  filter(!(estaca == 1 | estaca ==  2 | estaca == 5 |
+            estaca == 33 |
+             estaca == 41 | estaca ==42)) %>% 
+  group_by(yr, estaca) %>% 
+  summarise(total = sum(nidos)) 
+
+# estimacion de densidad con quadrant-count
+# en 20 m de radio = 1256 m2 o 0.1256 ha
+# 10000 m2 (1 ha) / 1256 m2 = estimación por parcela * 7.96 
+dens <- nidos2 %>% 
+  group_by(yr) %>% 
+  summarise(
+    n = n(),
+    media = mean(total),
+    media.ha = mean(total)*7.96,
+    sd = sd(total),
+    sd.ha = sd*7.96,
+    se.ha = (sd/sqrt(n))*7.96,
+    dIC.ha = se.ha * qt((1-0.05)/2 + .5, n-1), # = a decir 1.96 * se
+    ICmin.ha = media.ha - dIC.ha,
+    ICmax.ha = media.ha + dIC.ha
+  ) %>% 
+  add_row(yr = 2020, n = 44 , media = NA, media.ha = NA,
+          sd = NA, sd.ha = NA, se.ha = NA, dIC.ha = NA,
+          ICmin.ha = NA, ICmax.ha = NA) %>% 
+ arrange(yr)
+```
+
+
+Estimamos abundancia de cada año en base a la densidad por hectarea, area de cada colonia anual
 Extrapolamos al area de cada temporada
 
-```{r area de cada año }
+```{r area y abundancia de cada año }
 # areas de la colonia en el tiempo
     
 areas <- read.table("areas colonia.txt", header = T) %>% 
@@ -921,11 +990,11 @@ areas <- read.table("areas colonia.txt", header = T) %>%
          yr = temporada)
 mean(areas$areas.ha[areas$temporada == 2014],areas$areas.ha[areas$temporada == 2016])
 # 34.98983
-mean(areas$areas.ha[areas$temporada == 2017],areas$areas.ha[areas$temporada == 2017])
+mean(areas$areas.ha[areas$temporada == 2017],areas$areas.ha[areas$temporada == 2019])
 # 35.30128
 mean(areas$areas.ha.unif[areas$temporada == 2014],areas$areas.ha.unif[areas$temporada == 2016])
 # 36.84525
-mean(areas$areas.ha.unif[areas$temporada == 2017],areas$areas.ha.unif[areas$temporada == 2017])
+mean(areas$areas.ha.unif[areas$temporada == 2017],areas$areas.ha.unif[areas$temporada == 2019])
 # 36.44669
 
 abund <- left_join(dens,areas,by = "yr") %>% 
@@ -934,6 +1003,7 @@ abund <- left_join(dens,areas,by = "yr") %>%
          abund.ha = media.ha * areas.ha,
          areas.ha.unif = replace(areas.ha.unif, yr == 2015,36.84525),
          areas.ha.unif = replace(areas.ha.unif, yr == 2018,36.44669),
+         
          #abundancia
          abund.ha.unif = media.ha * areas.ha.unif,
          sd.ab = sd.ha * areas.ha.unif,
@@ -941,7 +1011,7 @@ abund <- left_join(dens,areas,by = "yr") %>%
          ICmin.ab = ICmin.ha * areas.ha.unif,
          ICmax.ab = ICmax.ha * areas.ha.unif) %>% 
   select(yr,n,media.ha, areas.ha.unif,abund.ha.unif,
-         sd.ab,se.ab,ICmin.ab,ICmax.ab)v
+         sd.ab,se.ab,ICmin.ab,ICmax.ab)
 ```
 
 ```{r Tasas extrapoladas a la colonia}
@@ -1004,7 +1074,7 @@ resumen_180_dias <- resumen_extrapolado %>%
 ```{r Tabla depredacion final}
 
 # RESUMEN FINAL: PINGÜINOS MUERTOS ESTIMADOS POR temporada
-# (Extrapolado a 180 días y toda la colonia)
+# (Extrapolado a 180 días y a toda la colonia con area de cada año)
 
 resumen_final_pinguinos <- resumen_180_dias %>%
   mutate(
@@ -1056,6 +1126,29 @@ promedios <- tabla_solo_edades_wide %>%
     `Total agrupado` = round(mean(as.numeric(`Total agrupado`), na.rm = TRUE), 1)
   )
 
+
+#Calcular SD 
+promedios <- tabla_solo_edades_wide %>%
+  summarise(
+    temporada = "Media (±SD)",
+    Adultos = paste0(
+      round(mean(as.numeric(Adultos), na.rm = TRUE), 1), " ± ",
+      round(sd(as.numeric(Adultos), na.rm = TRUE), 1)
+    ),
+    Pichones = paste0(
+      round(mean(as.numeric(Pichones), na.rm = TRUE), 1), " ± ",
+      round(sd(as.numeric(Pichones), na.rm = TRUE), 1)
+    ),
+    Juveniles = paste0(
+      round(mean(as.numeric(Juveniles), na.rm = TRUE), 1), " ± ",
+      round(sd(as.numeric(Juveniles), na.rm = TRUE), 1)
+    ),
+    `Total agrupado` = paste0(
+      round(mean(as.numeric(`Total agrupado`), na.rm = TRUE), 1), " ± ",
+      round(sd(as.numeric(`Total agrupado`), na.rm = TRUE), 1)
+    )
+  )
+
 # Calcular totales
 totales <- tabla_solo_edades_wide %>%
   summarise(
@@ -1066,11 +1159,20 @@ totales <- tabla_solo_edades_wide %>%
     `Total agrupado` = sum(as.numeric(`Total agrupado`), na.rm = TRUE)
   )
 
+
+#Convertir todo a caracter
+tabla_solo_edades_wide_chr <- tabla_solo_edades_wide %>%
+  mutate(across(-temporada, as.character))
+
+totales_chr <- totales %>%
+  mutate(across(-temporada, as.character))
+
 # Combinar tabla con totales y promedios
 tabla_completa <- bind_rows(
-  tabla_solo_edades_wide,
-  totales,
-  promedios)
+  tabla_solo_edades_wide_chr,
+  totales_chr,
+  promedios
+)
 
 print(tabla_completa)
 
@@ -1150,7 +1252,7 @@ grafico_2 <- ggplot(datos_sin_total, aes(x = año_inicial, y = Pingüinos, color
                                  "Pichones" = "#A23B72", 
                                  "Juveniles" = "#F18F01")) +
   labs(title = "Tendencia temporal de mortalidad por categoría",
-       subtitle = "Extrapolado a 180 días y toda la colonia (38.4 ha)",
+       subtitle = "Extrapolado a 180 días y toda la colonia (aprox. 38.4 ha)",
        x = "Temporada",
        y = "Número de pingüinos muertos",
        color = "Categoría") +
@@ -1192,39 +1294,59 @@ porcentaje_depredacion <- abund %>%
   filter(!is.na(porcentaje_depredacion)) %>%  # Eliminar años sin datos
   select(temporada, yr, abund.ha.unif, depredacion, porcentaje_depredacion)
 
-print(porcentaje_depredacion)
-
-
-# GRÁFICO DE PORCENTAJE DE DEPREDACIÓN  --------
-
-plot_porcentaje <- ggplot(datos_combinados %>% filter(!is.na(porcentaje_depredacion)), 
-                          aes(x = yr, y = porcentaje_depredacion)) +
-  geom_line(linewidth = 1, color = "black") +
-  geom_point(size = 2, color = "black") +
-  scale_x_continuous(
-    breaks = unique(datos_combinados$yr[!is.na(datos_combinados$porcentaje_depredacion)]),
-    labels = c("s15-16", "s16-17", "s17-18", "s18-19",
-               "s19-20", "s21-22", "s22-23", "s24-25", "s25-26")
-  ) +
-  scale_y_continuous(
-    limits = c(0, max(datos_combinados$porcentaje_depredacion, na.rm = TRUE) * 1.1),
-    breaks = seq(0, 10, by = 1)
-  ) +
-  labs(
-    x = "Season",
-    y = "Predation rate (% / pair abundance)"
-  ) +
-  theme_classic(base_size = 10) +
-  theme(
-    strip.background = element_rect(fill = "grey85", color = "black"),
-    strip.text = element_text(size = 10, face = "bold")
+# FILA MEDIA (promedio anual)
+fila_media <- porcentaje_depredacion %>%
+  summarise(
+    temporada = "Media",
+    yr = NA,
+    abund.ha.unif = mean(abund.ha.unif, na.rm = TRUE),
+    depredacion = mean(depredacion, na.rm = TRUE),
+    porcentaje_depredacion = mean(porcentaje_depredacion, na.rm = TRUE),
+    media_ponderada = NA
   )
 
-plot_porcentaje
+# FILA TOTAL (valor global)
+fila_total <- porcentaje_depredacion %>%
+  summarise(
+    temporada = "Total",
+    yr = NA,
+    abund.ha.unif = sum(abund.ha.unif, na.rm = TRUE),
+    depredacion = sum(depredacion, na.rm = TRUE),
+    porcentaje_depredacion = sum(depredacion, na.rm = TRUE) / 
+                             sum(abund.ha.unif, na.rm = TRUE) * 100,
+    media_ponderada = NA
+  )
 
-ggsave("depredacion_abundancia.jpeg", plot_porcentaje, width = 10, height = 6, dpi = 300)
+# UNIR TODO
+porcentaje_depredacion_final <- porcentaje_depredacion %>%
+  mutate(media_ponderada = NA) %>%
+  bind_rows(fila_media, fila_total)
+
+#El total del porcentaje es: La proporción total de individuos depredados respecto al total de individuos disponibles a lo largo de todo el período.
+#Overall, predation accounted for X% of the breeding population across the study period.”
+print(porcentaje_depredacion_final)
 
 
+#bootstrap de IC 
+set.seed(123)
+
+boot <- replicate(1000, {
+  sample_data <- porcentaje_depredacion %>%
+    slice_sample(n = nrow(porcentaje_depredacion), replace = TRUE)
+  
+  sum(sample_data$depredacion, na.rm = TRUE) /
+    sum(sample_data$abund.ha.unif, na.rm = TRUE) * 100
+})
+
+IC <- quantile(boot, c(0.025, 0.975))
+IC
+IC_inf <- IC[1]
+IC_sup <- IC[2]
+
+"Annual predation rates varied markedly among seasons (0.8–6.0%). Overall, predation accounted for 2,98% of the breeding population (95% CI: 1.88–3.90%) across the study period"
+
+```
+```{r grafico}
 # GRÁFICO DE PORCENTAJE DE DEPREDACIÓN y ABUNDANCIA COMBINADO --------
 
 # Unir datos de abundancia con porcentaje de depredación
@@ -1261,11 +1383,11 @@ plot <- ggplot(datos_combinados, aes(x = yr)) +
   scale_y_continuous(
     limits = c(0, 75000),
     breaks = seq(0, 70000, by = 10000),
-    labels = scales::comma,
+    #labels = scales::comma,
     name = "Pair abundance",
     sec.axis = sec_axis(
       ~ . / factor_escala,
-      name = "Predation rate (%)",
+      name = "Predation rate (% / pair abundance)",
       breaks = seq(0, 10, by = 1)
     )
   ) +
@@ -1281,4 +1403,54 @@ plot <- ggplot(datos_combinados, aes(x = yr)) +
 plot
 ggsave("depredacion_abundancia_combinada.jpeg", plot, width = 10, height = 6, dpi = 300)
 
+
+# GRÁFICO DE PORCENTAJE DE DEPREDACIÓN  --------
+
+plot_porcentaje <- ggplot(datos_combinados %>% filter(!is.na(porcentaje_depredacion)), 
+                          aes(x = yr, y = porcentaje_depredacion)) +
+  geom_line(linewidth = 1, color = "black") +
+  geom_point(size = 2, color = "black") +
+  scale_x_continuous(
+    breaks = unique(datos_combinados$yr[!is.na(datos_combinados$porcentaje_depredacion)]),
+    labels = c("s15-16", "s16-17", "s17-18", "s18-19",
+              "s19-20", "s20-21", "s21-22", "s22-23", "s24-25", "s25-26")
+  ) +
+  scale_y_continuous(
+    limits = c(0, max(datos_combinados$porcentaje_depredacion, na.rm = TRUE) * 1.1),
+    breaks = seq(0, 10, by = 1)
+  ) +
+  labs(
+    x = "Season",
+    y = "Predation rate (% / pair abundance)"
+  ) +
+  theme_classic(base_size = 10) +
+  theme(
+    strip.background = element_rect(fill = "grey85", color = "black"),
+    strip.text = element_text(size = 10, face = "bold")
+  )
+
+plot_porcentaje
+
+ggsave("depredacion_abundancia.jpeg", plot_porcentaje, width = 10, height = 6, dpi = 300)
+
+```
+
+
+```{r tabla final}
+# Parte A: total + porcentaje
+tabla_total <- porcentaje_depredacion_final %>%
+  select(temporada, abund.ha.unif, depredacion, porcentaje_depredacion, media_ponderada) %>%
+  mutate(
+    porcentaje_depredacion = ifelse(temporada == "Total",
+                                    paste0(round(porcentaje_depredacion, 2), " (95% CI: ", 
+                                           round(IC[1], 2), "-", round(IC[2], 2), ")"),
+                                    round(porcentaje_depredacion, 2))
+  )
+
+# Parte B: edades + totales y media ± SD
+tabla_edades <- tabla_completa
+
+# Ambas tablas listas para exportar a CSV o Word para manuscrito
+write.csv(tabla_total, "Tabla_Depredacion_Total.csv", row.names = FALSE)
+write.csv(tabla_edades, "Tabla_Depredacion_Edades.csv", row.names = FALSE)
 ```
