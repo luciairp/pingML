@@ -455,18 +455,13 @@ dias_bloque <- depredacion_ping %>%
   arrange(temporada, bloque_relativo2) %>%
   group_by(temporada) %>%
   mutate(
-    # Identificar si es el primer bloque del temporada
-    es_primer_bloque = bloque_relativo2 == first(bloque_relativo2),
-    # Obtener la PRIMERA fecha del bloque ANTERIOR
-    primera_fecha_anterior = lag(primera_fecha),
-    # Calcular días desde el INICIO del bloque anterior hasta el INICIO de este
-    dias = case_when(
-      # Para el primer bloque: NA (no hay bloque anterior)
-      es_primer_bloque ~ NA_real_,
-      # Para los demás: días desde primera fecha del anterior hasta primera de este
-      !is.na(primera_fecha_anterior) ~ as.numeric(difftime(primera_fecha, primera_fecha_anterior, units = "days")),
-      # Por si acaso
-      TRUE ~ NA_real_
+        es_primer_bloque = bloque_relativo2 == first(bloque_relativo2), # Identificar si es el primer bloque del temporada
+        primera_fecha_anterior = lag(primera_fecha), # Obtener la PRIMERA fecha del bloque ANTERIOR
+        dias = case_when( # Calcular días desde el INICIO del bloque anterior hasta el INICIO de este
+            es_primer_bloque ~ NA_real_, # Para el primer bloque: NA (no hay bloque anterior)
+           !is.na(primera_fecha_anterior) ~ as.numeric(difftime(primera_fecha, primera_fecha_anterior, units = "days")),  # Para los demás: días desde primera fecha del anterior hasta primera de este
+      
+      TRUE ~ NA_real_ # Por si acaso
     )
   ) %>%
   ungroup() %>%
@@ -529,6 +524,7 @@ bloques_pichones <- left_join(eventos_pichones, dias_bloque,
     categoria = "Pichones"
   )
 
+
 # --- Solo juveniles -----
 eventos_juveniles <- depredacion_ping %>%
   filter(edad == "juvenil") %>%  # Filtrar solo juveniles
@@ -536,8 +532,7 @@ eventos_juveniles <- depredacion_ping %>%
   summarise(
     puma = sum(depredacion_puma, na.rm = TRUE),
     mortalidad = sum(mortalidad, na.rm = TRUE),
-    .groups = "drop"
-  )
+    .groups = "drop")
 
 bloques_juveniles <- left_join(eventos_juveniles, dias_bloque,
                                by = c("temporada", "bloque_relativo2")) %>%
@@ -566,6 +561,62 @@ bloques_todos <- left_join(eventos_todos, dias_bloque,
     tasa_puma = if_else(!is.na(dias), puma / dias, NA_real_),
     tasa_mortalidad = if_else(!is.na(dias), mortalidad / dias, NA_real_),
     categoria = "Todos"
+  )
+
+
+```
+```{r corroborar eventos de pichones}
+eventos_pichones_full <- eventos_pichones %>%
+  filter(bloque_relativo2 %in% 3:12) %>%
+  complete(temporada, bloque_relativo2 = 3:12,
+           fill = list(puma = 0, mortalidad = 0))
+bloques_labels_pichones <- tibble::tibble(
+  bloque_relativo2 = 3:12,
+  periodo = c(
+    "23 Nov–6 Dic",
+    "7–21 Dic",
+    "22 Dic–6 Ene",
+    "7–20 Ene",
+    "21 Ene–4 Feb",
+    "5–19 Feb",
+    "20 Feb–3 Mar",
+    "4–18 Mar",
+    "19 Mar–2 Abr",
+    "3–17 Abr"
+  )
+)
+eventos_pichones_full <- eventos_pichones_full %>%
+  left_join(bloques_labels_pichones, by = "bloque_relativo2")
+
+
+
+ggplot(eventos_pichones_full, aes(x = factor(bloque_relativo2))) +
+  
+  geom_col(aes(y = mortalidad, fill = factor(temporada)),
+           position = "dodge", alpha = 0.8) +
+  
+  geom_point(aes(y = puma, group = temporada),
+             position = position_dodge(width = 0.9),
+             size = 2, color = "black") +
+  
+  scale_x_discrete(labels = bloques_labels_pichones$periodo) +
+  scale_fill_manual(values = c(
+  "#1b9e77", "#d95f02", "#7570b3",
+  "#e7298a", "#66a61e", "#e6ab02",
+  "#a6761d", "#666666","#116114","#913191"
+))+
+  
+  scale_y_continuous(limits = c(0,72)) +
+  
+  labs(
+    x = "Periodo de presencia de pichones",
+    y = "Número de pichones muertos",
+    fill = "Temporada"
+  ) +
+  
+  theme_classic() +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1)
   )
 
 ```
@@ -641,8 +692,6 @@ print(grafico_1)
 
 
 # GRÁFICO 2: Serie temporal de eventos por categoría
-
-
 eventos_por_temporada <- datos_visualizacion %>%
   group_by(temporada, categoria) %>%
   summarise(
@@ -651,36 +700,23 @@ eventos_por_temporada <- datos_visualizacion %>%
     .groups = "drop"
   )
 
-grafico_2a <- ggplot(eventos_por_temporada, aes(x = temporada, y = total_puma, color = categoria, group = categoria)) +
+eventos_por_temporada$temporada = as.character(eventos_por_temporada$temporada)
+
+grafico_2 <- ggplot(eventos_por_temporada, aes(x = temporada, y = total_mortalidad, color = categoria, group = categoria)) +
   geom_line(size = 1) +
   geom_point(size = 2.5) +
   scale_color_brewer(palette = "Set2") +
-  labs(title = "Eventos de depredación por puma a lo largo del tiempo",
+  labs(title = "Eventos de mortalidad en 21 estacas con 60 a 178 dias de muestreo",
        x = "temporada",
        y = "Número de eventos",
        color = "Categoría") +
   theme_minimal() +
   theme(legend.position = "bottom")
 
-print(grafico_2a)
-
-grafico_2b <- ggplot(eventos_por_temporada, aes(x = temporada, y = total_mortalidad, color = categoria, group = categoria)) +
-  geom_line(size = 1) +
-  geom_point(size = 2.5) +
-  scale_color_brewer(palette = "Set2") +
-  labs(title = "Eventos de mortalidad total a lo largo del tiempo",
-       x = "temporada",
-       y = "Número de eventos",
-       color = "Categoría") +
-  theme_minimal() +
-  theme(legend.position = "bottom")
-
-print(grafico_2b)
+print(grafico_2)
 
 
 # GRÁFICO 3: Eventos por bloque relativo (patrón estacional)
-
-
 eventos_por_bloque <- datos_visualizacion %>%
   group_by(bloque_relativo2, categoria) %>%
   summarise(
@@ -688,8 +724,6 @@ eventos_por_bloque <- datos_visualizacion %>%
     promedio_mortalidad = mean(mortalidad, na.rm = TRUE),
     .groups = "drop"
   )
-
-
 # Crear etiquetas cortas (solo fecha de inicio)
 etiquetas_bloques <- data.frame(
   bloque_relativo2 = 1:13,
@@ -697,16 +731,14 @@ etiquetas_bloques <- data.frame(
     "Oct 23", "Nov 08", "Nov 23", "Dic 07", "Dic 22",
     "Ene 07", "Ene 21", "Feb 05", "Feb 20", "Mar 04",
     "Mar 19", "Abr 03", "Abr 18"
-  )
-)
+  ))
 
 # Unir las etiquetas con los datos
 eventos_por_bloque <- eventos_por_bloque %>%
   left_join(etiquetas_bloques, by = "bloque_relativo2")
 
-
 # Gráfico con fechas cortas
-grafico_3a <- ggplot(eventos_por_bloque, aes(x = bloque_relativo2, y = promedio_puma, color = categoria, group = categoria)) +
+grafico_3 <- ggplot(eventos_por_bloque, aes(x = bloque_relativo2, y = promedio_mortalidad, color = categoria, group = categoria)) +
   geom_line(size = 1) +
   geom_point(size = 2) +
   scale_x_continuous(
@@ -714,7 +746,7 @@ grafico_3a <- ggplot(eventos_por_bloque, aes(x = bloque_relativo2, y = promedio_
     labels = etiquetas_bloques$fecha_label
   ) +
   scale_color_brewer(palette = "Set2") +
-  labs(title = "Patrón de depredación por puma según bloque relativo",
+  labs(title = "Patrón de mortalidad según bloque relativo en 21 estacas con 60 a 170 dias de muestreo",
        subtitle = "Promedio de eventos por bloque a través de los temporadas",
        x = "Fecha de inicio del bloque",
        y = "Promedio de eventos",
@@ -723,31 +755,10 @@ grafico_3a <- ggplot(eventos_por_bloque, aes(x = bloque_relativo2, y = promedio_
   theme(legend.position = "bottom",
         axis.text.x = element_text(angle = 45, hjust = 1))
 
-print(grafico_3a)
-
-grafico_3b <- ggplot(eventos_por_bloque, aes(x = bloque_relativo2, y = promedio_mortalidad, color = categoria, group = categoria)) +
-  geom_line(size = 1) +
-  geom_point(size = 2) +
-  scale_x_continuous(
-    breaks = 1:13,
-    labels = etiquetas_bloques$fecha_label
-  ) +
-  scale_color_brewer(palette = "Set2") +
-  labs(title = "Patrón de mortalidad según bloque relativo",
-       subtitle = "Promedio de eventos por bloque a través de los temporadas",
-       x = "Fecha de inicio del bloque",
-       y = "Promedio de eventos",
-       color = "Categoría") +
-  theme_minimal() +
-  theme(legend.position = "bottom",
-        axis.text.x = element_text(angle = 45, hjust = 1))
-
-print(grafico_3b)
-
+print(grafico_3)
 
 
 # GRÁFICO 4: Comparación directa entre categorías de edad
-
 
 # Solo las categorías individuales (sin combinaciones)
 eventos_edades <- bind_rows(
@@ -820,20 +831,19 @@ print(tabla_eventos_completa)
 
 # Preparar datos en formato largo para graficar
 datos_largo <- tabla_eventos_completa %>%
-  pivot_longer(cols = c(total_puma, total_mortalidad, total_sin_mortalidad),
+  pivot_longer(cols = c(total_mortalidad, total_sin_mortalidad),#total_puma
                names_to = "tipo_evento",
                values_to = "eventos") %>%
   mutate(tipo_evento = recode(tipo_evento,
-                              "total_puma" = "Depredación puma",
-                              "total_mortalidad" = "Con mortalidad",
-                              "total_sin_mortalidad" = "Sin mortalidad"))
+                              #"total_puma" = "Depredación puma",
+                              "total_mortalidad" = "Ping. muertos",
+                              "total_sin_mortalidad" = "Ping. vivos"))
 
 grafico_1 <- ggplot(datos_largo, aes(x = as.factor(temporada), y = eventos, fill = tipo_evento)) +
   geom_bar(stat = "identity", position = "dodge") +
   facet_wrap(~categoria, scales = "free_y", ncol = 2) +
-  scale_fill_manual(values = c("Depredación puma" = "#E63946", 
-                                "Con mortalidad" = "#457B9D",
-                                "Sin mortalidad" = "#2A9D8F")) +
+  scale_fill_manual(values = c( "Ping. muertos" = "#E92136",
+                                "Ping. vivos" = "#2A9D8F")) +
   labs(title = "Eventos por temporada y categoría de edad",
        x = "temporada",
        y = "Número de eventos",
@@ -844,7 +854,7 @@ grafico_1 <- ggplot(datos_largo, aes(x = as.factor(temporada), y = eventos, fill
 
 print(grafico_1)
 
-```
+  ```
 
 
 Asumimos que:
@@ -885,10 +895,10 @@ dias_por_temporada <- dias_bloque %>%
     ))%>%
   group_by(temporada) %>%
   summarise(
-    total_dias_muestreo = sum(dias_ajustados, na.rm = TRUE),
+    total_dias_muestreo = sum(dias_ajustados, na.rm = TRUE), #con bloque justado de 15 dias
+    total_dias_sin_bloque1 = sum( ifelse(es_primer_bloque == TRUE, 0, dias_ajustados),na.rm = TRUE), #sin bloque ajustado de 15 dias
     n_bloques = n(),
-    .groups = "drop"
-  )
+    .groups = "drop")
 
 #Ajustar el bloque 1 a 15 dias
 
@@ -933,7 +943,7 @@ resumen_temporada <- bloque_todos_ajustado %>%
     tasa_mortalidad_total_puma = mortalidad_total_puma / total_dias_muestreo
   ) %>%
   select(temporada, categoria, depredacion_puma_directa, mortalidad_total_puma, 
-         total_dias_muestreo, n_bloques, tasa_depredacion_directa, 
+         total_dias_muestreo,total_dias_sin_bloque1, n_bloques, tasa_depredacion_directa, 
          tasa_mortalidad_total_puma) %>%
   arrange(temporada, categoria)
 
@@ -1029,7 +1039,7 @@ resumen_extrapolado <- resumen_temporada %>%
   )%>%
   mutate(
       factor_extrapolacion = areas.ha.unif / area_muestreada, # Factor de extrapolación específico para cada año
-    tasa_mortalidad_puma_colonia = tasa_mortalidad_total_puma * factor_extrapolacion,  # Tasa de mortalidad extrapolada a toda la colonia
+      tasa_mortalidad_puma_colonia = tasa_mortalidad_total_puma * factor_extrapolacion,  # Tasa de mortalidad extrapolada a toda la colonia
       eventos_mortalidad_puma_temporada = tasa_mortalidad_puma_colonia * total_dias_muestreo,     # Eventos totales de mortalidad en la colonia por temporada
     area_muestreada_ha = area_muestreada, #area de estacas en ha
     area_colonia_ha = areas.ha.unif  # area de colonia por año en ha
@@ -1038,7 +1048,7 @@ resumen_extrapolado <- resumen_temporada %>%
     temporada, categoria, 
     mortalidad_total_puma, tasa_mortalidad_total_puma, 
     tasa_mortalidad_puma_colonia, eventos_mortalidad_puma_temporada,
-    total_dias_muestreo, n_bloques, 
+    total_dias_muestreo,total_dias_sin_bloque1, n_bloques, 
     area_muestreada_ha, area_colonia_ha, factor_extrapolacion
   ) %>%
   arrange(temporada, categoria)
@@ -1053,19 +1063,30 @@ resumen_extrapolado <- resumen_temporada %>%
 
 # EXTRAPOLACIÓN A TODA LA COLONIA Y TEMPORADA COMPLETA (180 DÍAS) ------------
 
-duracion_temporada <- 180  # días totales de temporada reproductiva
+duracion_temporada_adultos <- 180  # días totales de temporada reproductiva
+duracion_temporada_juveniles <- 75
+
 
 resumen_180_dias <- resumen_extrapolado %>%
   mutate(
-    eventos_mortalidad_180_dias = tasa_mortalidad_puma_colonia * duracion_temporada, # Eventos estimados para LA TEMPORADA COMPLETA (180 días)
-    proporcion_temporada_muestreada = total_dias_muestreo / duracion_temporada,   # Proporción de la temporada muestreada
-    dias_no_muestreados = duracion_temporada - total_dias_muestreo,    # Días no muestreados
-    duracion_temporada_dias = duracion_temporada   # Agregar duración de temporada
+        duracion_temporada = case_when( # Definir duración según categoría
+      categoria == "adulto" ~ duracion_temporada_adultos,
+      categoria %in% c("juvenil", "pichon") ~ duracion_temporada_juveniles
+    ),
+    eventos_mortalidad_180_dias = tasa_mortalidad_puma_colonia * duracion_temporada,     # Extrapolación correcta
+    proporcion_temporada_muestreada = total_dias_sin_bloque1 / duracion_temporada, # Proporciones (ahora coherentes con cada categoría)
+    dias_no_muestreados = duracion_temporada - total_dias_sin_bloque1
   ) %>%
   select(
-    temporada, categoria, total_dias_muestreo, dias_no_muestreados,   proporcion_temporada_muestreada,  mortalidad_total_puma,
-    tasa_mortalidad_total_puma,  tasa_mortalidad_puma_colonia, eventos_mortalidad_puma_temporada, eventos_mortalidad_180_dias,         
-     n_bloques, duracion_temporada_dias, area_muestreada_ha, area_colonia_ha, factor_extrapolacion
+    temporada, categoria, total_dias_sin_bloque1,
+    dias_no_muestreados, proporcion_temporada_muestreada,
+    mortalidad_total_puma,
+    tasa_mortalidad_total_puma,
+    tasa_mortalidad_puma_colonia,
+    eventos_mortalidad_puma_temporada,
+    eventos_mortalidad_180_dias,
+    n_bloques, duracion_temporada,
+    area_muestreada_ha, area_colonia_ha, factor_extrapolacion
   ) %>%
   arrange(temporada, categoria)
 
@@ -1346,6 +1367,7 @@ IC_sup <- IC[2]
 "Annual predation rates varied markedly among seasons (0.8–6.0%). Overall, predation accounted for 2,98% of the breeding population (95% CI: 1.88–3.90%) across the study period"
 
 ```
+----- Graficos -------
 ```{r grafico}
 # GRÁFICO DE PORCENTAJE DE DEPREDACIÓN y ABUNDANCIA COMBINADO --------
 
@@ -1353,8 +1375,7 @@ IC_sup <- IC[2]
 datos_combinados <- abund %>%
   left_join(depred_adultos, by = "yr") %>%
   mutate(
-    porcentaje_depredacion = (depredacion / abund.ha.unif) * 100
-  )
+    porcentaje_depredacion = (depredacion / abund.ha.unif) * 100 )
 
 # Calcular factor de escala para el segundo eje
 max_abund <- max(datos_combinados$abund.ha.unif, na.rm = TRUE)
@@ -1371,7 +1392,7 @@ plot <- ggplot(datos_combinados, aes(x = yr)) +
   # Porcentaje de depredación (barras)
   geom_col(
     aes(y = porcentaje_depredacion * factor_escala),
-    fill = "grey60", alpha = 0.6, width = 0.6
+    fill = "lightblue", alpha = 0.6, width = 0.6
   ) +
   # Escalas
   scale_x_continuous(
@@ -1401,11 +1422,11 @@ plot <- ggplot(datos_combinados, aes(x = yr)) +
   )
 
 plot
-ggsave("depredacion_abundancia_combinada.jpeg", plot, width = 10, height = 6, dpi = 300)
+
+ggsave("depredacion_abundancia_combinada.pdf", plot, width = 10, height = 6, dpi = 300)
 
 
-# GRÁFICO DE PORCENTAJE DE DEPREDACIÓN  --------
-
+##### GRÁFICO DE PORCENTAJE DE DEPREDACIÓN  --------
 plot_porcentaje <- ggplot(datos_combinados %>% filter(!is.na(porcentaje_depredacion)), 
                           aes(x = yr, y = porcentaje_depredacion)) +
   geom_line(linewidth = 1, color = "black") +
@@ -1425,7 +1446,7 @@ plot_porcentaje <- ggplot(datos_combinados %>% filter(!is.na(porcentaje_depredac
   ) +
   theme_classic(base_size = 10) +
   theme(
-    strip.background = element_rect(fill = "grey85", color = "black"),
+    strip.background = element_rect(fill = "lightblue", color = "black"),
     strip.text = element_text(size = 10, face = "bold")
   )
 
@@ -1434,8 +1455,6 @@ plot_porcentaje
 ggsave("depredacion_abundancia.jpeg", plot_porcentaje, width = 10, height = 6, dpi = 300)
 
 ```
-
-
 ```{r tabla final}
 # Parte A: total + porcentaje
 tabla_total <- porcentaje_depredacion_final %>%
@@ -1453,4 +1472,271 @@ tabla_edades <- tabla_completa
 # Ambas tablas listas para exportar a CSV o Word para manuscrito
 write.csv(tabla_total, "Tabla_Depredacion_Total.csv", row.names = FALSE)
 write.csv(tabla_edades, "Tabla_Depredacion_Edades.csv", row.names = FALSE)
+```
+
+
+----------- ################# BLOQUES ################### -----------
+
+```{r Tabla con BLOQUES --------}
+
+# Crear el resumen por temporada (temporada) y categoría y bloques
+resumen_temporada_bloques <- bloque_todos_ajustado %>%
+  group_by(temporada, bloque_relativo2,primera_fecha,ultima_fecha, categoria) %>%
+  summarise(
+    depredacion_puma_directa = sum(puma, na.rm = TRUE),
+    mortalidad_total_puma = sum(mortalidad, na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  left_join(dias_por_temporada, by = "temporada") %>%  # Unir con los días totales por temporada
+  mutate(
+    tasa_depredacion_directa = depredacion_puma_directa / total_dias_muestreo,
+    tasa_mortalidad_total_puma = mortalidad_total_puma / total_dias_muestreo
+  ) %>%
+  select(temporada, bloque_relativo2,primera_fecha,ultima_fecha,categoria, depredacion_puma_directa, mortalidad_total_puma, 
+         total_dias_muestreo, n_bloques, tasa_depredacion_directa, 
+         tasa_mortalidad_total_puma) %>%
+  arrange(temporada,bloque_relativo2,primera_fecha,ultima_fecha, categoria)
+
+
+```
+
+Incorporamos la densidad de pinguinos por ha., estimada a artir de las 38 estacas core y extrapolada a la superficie de la colonia de cada año
+```{r BLOQUES }
+
+cruda <- read_xlsx("nidos_2015-2025.xlsx")
+
+#solo con 38 estacas que siempre estuvieron dentro de la colonia
+nidos2 <- cruda %>% 
+  select(yr, estaca, nidos) %>% 
+  complete(yr, estaca, fill = list(nidos = 0)) %>% 
+  filter(!(estaca == 1 | estaca ==  2 | estaca == 5 |
+            estaca == 33 |
+             estaca == 41 | estaca ==42)) %>% 
+  group_by(yr, estaca) %>% 
+  summarise(total = sum(nidos)) 
+
+# estimacion de densidad con quadrant-count
+# en 20 m de radio = 1256 m2 o 0.1256 ha
+# 10000 m2 (1 ha) / 1256 m2 = estimación por parcela * 7.96 
+dens <- nidos2 %>% 
+  group_by(yr) %>% 
+  summarise(
+    n = n(),
+    media = mean(total),
+    media.ha = mean(total)*7.96,
+    sd = sd(total),
+    sd.ha = sd*7.96,
+    se.ha = (sd/sqrt(n))*7.96,
+    dIC.ha = se.ha * qt((1-0.05)/2 + .5, n-1), # = a decir 1.96 * se
+    ICmin.ha = media.ha - dIC.ha,
+    ICmax.ha = media.ha + dIC.ha
+  ) %>% 
+  add_row(yr = 2020, n = 44 , media = NA, media.ha = NA,
+          sd = NA, sd.ha = NA, se.ha = NA, dIC.ha = NA,
+          ICmin.ha = NA, ICmax.ha = NA) %>% 
+ arrange(yr)
+```
+Estimamos abundancia de cada año en base a la densidad por hectarea, area de cada colonia anual
+Extrapolamos al area de cada temporada
+
+```{r area y abundancia de cada año BLOQUES }
+# areas de la colonia en el tiempo
+    
+areas <- read.table("areas colonia.txt", header = T) %>% 
+  mutate(areas.ha = aream2/10000,
+         areas.ha.unif = aream2unif/10000,
+         yr = temporada)
+mean(areas$areas.ha[areas$temporada == 2014],areas$areas.ha[areas$temporada == 2016])
+# 34.98983
+mean(areas$areas.ha[areas$temporada == 2017],areas$areas.ha[areas$temporada == 2019])
+# 35.30128
+mean(areas$areas.ha.unif[areas$temporada == 2014],areas$areas.ha.unif[areas$temporada == 2016])
+# 36.84525
+mean(areas$areas.ha.unif[areas$temporada == 2017],areas$areas.ha.unif[areas$temporada == 2019])
+# 36.44669
+
+abund <- left_join(dens,areas,by = "yr") %>% 
+  mutate(areas.ha = replace(areas.ha, yr == 2015,34.98983),
+         areas.ha = replace(areas.ha, yr == 2018,35.30128),
+         abund.ha = media.ha * areas.ha,
+         areas.ha.unif = replace(areas.ha.unif, yr == 2015,36.84525),
+         areas.ha.unif = replace(areas.ha.unif, yr == 2018,36.44669),
+         
+         #abundancia
+         abund.ha.unif = media.ha * areas.ha.unif,
+         sd.ab = sd.ha * areas.ha.unif,
+         se.ab = se.ha * areas.ha.unif,
+         ICmin.ab = ICmin.ha * areas.ha.unif,
+         ICmax.ab = ICmax.ha * areas.ha.unif) %>% 
+  select(yr,n,media.ha, areas.ha.unif,abund.ha.unif,
+         sd.ab,se.ab,ICmin.ab,ICmax.ab)
+```
+
+```{r Tasas extrapoladas a la colonia por BLOQUES}
+
+# EXTRAPOLACIÓN A TODA LA COLONIA ---------
+
+# Parámetros de la colonia
+area_muestreada <- 2.64  # hectáreas (21 estacas)
+
+# UNIR CON LOS DATOS DE ÁREA POR AÑO
+resumen_extrapolado_bloques <- resumen_temporada_bloques %>%
+  left_join(
+    abund %>% select(yr, areas.ha.unif), 
+    by = c("temporada" = "yr")  # Relacionar temporada con cada año. En 2015 se uso el promedio del area de 2014 y 2016 y en 2018 se uso la media de 2017 y 2019
+  )%>%
+  mutate(
+      factor_extrapolacion = areas.ha.unif / area_muestreada, # Factor de extrapolación específico para cada año
+    tasa_mortalidad_puma_colonia = tasa_mortalidad_total_puma * factor_extrapolacion,  # Tasa de mortalidad extrapolada a toda la colonia
+      eventos_mortalidad_puma_temporada = tasa_mortalidad_puma_colonia * total_dias_muestreo,     # Eventos totales de mortalidad en la colonia por temporada
+    area_muestreada_ha = area_muestreada, #area de estacas en ha
+    area_colonia_ha = areas.ha.unif  # area de colonia por año en ha
+  ) %>%
+  select(
+    temporada,bloque_relativo2,primera_fecha,ultima_fecha, categoria, 
+    mortalidad_total_puma, tasa_mortalidad_total_puma, 
+    tasa_mortalidad_puma_colonia, eventos_mortalidad_puma_temporada,
+    total_dias_muestreo, n_bloques, 
+    area_muestreada_ha, area_colonia_ha, factor_extrapolacion
+  ) %>%
+  arrange(temporada, categoria)
+
+```
+
+- En algunos temporadas tuvimos menos dias de relevamiento porque hay bloques donde no se muestreó: ej 97 dias 2015, 70 dias 2017, 150 dias 2016,177 en 2021
+- ENTONCES LO LLEVO A 180 dias
+
+```{r Tasas extrapoladas a 180 dias de colonia BLOQUES}
+
+
+# EXTRAPOLACIÓN A TODA LA COLONIA Y TEMPORADA COMPLETA (180 DÍAS) ------------
+
+duracion_temporada <- 180  # días totales de temporada reproductiva
+
+resumen_180_dias_bloques <- resumen_extrapolado_bloques %>%
+  mutate(
+    eventos_mortalidad_180_dias = tasa_mortalidad_puma_colonia * duracion_temporada, # Eventos estimados para LA TEMPORADA COMPLETA (180 días)
+    proporcion_temporada_muestreada = total_dias_muestreo / duracion_temporada,   # Proporción de la temporada muestreada
+    dias_no_muestreados = duracion_temporada - total_dias_muestreo,    # Días no muestreados
+    duracion_temporada_dias = duracion_temporada   # Agregar duración de temporada
+  ) %>%
+  select(
+    temporada, categoria,bloque_relativo2,primera_fecha,ultima_fecha,
+    total_dias_muestreo, dias_no_muestreados,   proporcion_temporada_muestreada,  mortalidad_total_puma,
+    tasa_mortalidad_total_puma,  tasa_mortalidad_puma_colonia, eventos_mortalidad_puma_temporada, eventos_mortalidad_180_dias,         
+     n_bloques, duracion_temporada_dias, area_muestreada_ha, area_colonia_ha, factor_extrapolacion
+  ) %>%
+  arrange(temporada, categoria)
+
+```
+
+```{r Tabla depredacion final BLOQUES}
+
+# RESUMEN FINAL: PINGÜINOS MUERTOS ESTIMADOS POR temporada
+# (Extrapolado a 180 días y a toda la colonia con area de cada año)
+
+resumen_final_pinguinos_bloques <- resumen_180_dias_bloques %>%
+  mutate(
+    temporada = paste0(temporada, "-", temporada + 1) # Crear columna de temporada en formato "2015-2016"
+  ) %>%
+  select(
+    temporada = temporada, 
+    Categoría = categoria,
+    Bloque=bloque_relativo2,
+    `Primera fecha` = primera_fecha,
+    `Ultima fecha` = ultima_fecha,
+    `Pingüinos muertos estimados` = eventos_mortalidad_180_dias ) %>%
+  mutate(
+    `Pingüinos muertos estimados` = round(`Pingüinos muertos estimados`, 0)
+  ) %>%
+  arrange(temporada, Categoría)
+
+# TABLA PIVOTEADA: temporadaS EN FILAS, CATEGORÍAS EN COLUMNAS
+
+
+tabla_pinguinos_wide_bloques <- resumen_final_pinguinos_bloques %>%
+  pivot_wider(
+    names_from = Categoría,
+    values_from = `Pingüinos muertos estimados`
+  ) %>%
+  arrange(temporada)
+
+# SOLO CATEGORÍAS POR EDAD CON TOTALES Y PROMEDIOS
+
+resumen_solo_edades_bloques <- resumen_final_pinguinos_bloques %>%
+  filter(Categoría %in% c("Adultos", "Pichones", "Juveniles"))
+
+tabla_solo_edades_wide_bloques <- resumen_solo_edades_bloques %>%
+  pivot_wider(
+    names_from = Categoría,
+    values_from = `Pingüinos muertos estimados`
+  ) %>%
+  mutate(
+    `Total agrupado` = Adultos + Pichones + Juveniles,     # Total agrupado por temporada (suma de todas las categorías)
+       temporada = as.character(temporada)  # Convertir temporada a character para poder agregar filas de texto
+  ) %>%
+  arrange(temporada)
+
+# Calcular promedios anuales
+promedios_bloques <- tabla_solo_edades_wide_bloques %>%
+  summarise(
+    temporada = "Promedio anual",
+    Adultos = round(mean(as.numeric(Adultos), na.rm = TRUE), 1),
+    Pichones = round(mean(as.numeric(Pichones), na.rm = TRUE), 1),
+    Juveniles = round(mean(as.numeric(Juveniles), na.rm = TRUE), 1),
+    `Total agrupado` = round(mean(as.numeric(`Total agrupado`), na.rm = TRUE), 1)
+  )
+
+
+#Calcular SD 
+promedios_bloques <- tabla_solo_edades_wide_bloques %>%
+  summarise(
+    temporada = "Media (±SD)",
+    Adultos = paste0(
+      round(mean(as.numeric(Adultos), na.rm = TRUE), 1), " ± ",
+      round(sd(as.numeric(Adultos), na.rm = TRUE), 1)
+    ),
+    Pichones = paste0(
+      round(mean(as.numeric(Pichones), na.rm = TRUE), 1), " ± ",
+      round(sd(as.numeric(Pichones), na.rm = TRUE), 1)
+    ),
+    Juveniles = paste0(
+      round(mean(as.numeric(Juveniles), na.rm = TRUE), 1), " ± ",
+      round(sd(as.numeric(Juveniles), na.rm = TRUE), 1)
+    ),
+    `Total agrupado` = paste0(
+      round(mean(as.numeric(`Total agrupado`), na.rm = TRUE), 1), " ± ",
+      round(sd(as.numeric(`Total agrupado`), na.rm = TRUE), 1)
+    )
+  )
+
+# Calcular totales
+totales_bloques <- tabla_solo_edades_wide_bloques %>%
+  summarise(
+    temporada = "TOTAL",
+    Adultos = sum(as.numeric(Adultos), na.rm = TRUE),
+    Pichones = sum(as.numeric(Pichones), na.rm = TRUE),
+    Juveniles = sum(as.numeric(Juveniles), na.rm = TRUE),
+    `Total agrupado` = sum(as.numeric(`Total agrupado`), na.rm = TRUE)
+  )
+
+
+#Convertir todo a caracter
+tabla_solo_edades_wide_chr_bloques <- tabla_solo_edades_wide_bloques %>%
+  mutate(across(-temporada, as.character))
+
+totales_chr_bloques <- totales_bloques %>%
+  mutate(across(-temporada, as.character))
+
+# Combinar tabla con totales y promedios
+tabla_completa_bloques <- bind_rows(
+  tabla_solo_edades_wide_chr_bloques,
+  totales_chr_bloques,
+  promedios_bloques
+)
+
+print(tabla_completa_bloques)
+
+
+write.csv(tabla_completa_bloques, "depredacion_edad_bloques.csv", row.names = FALSE)
 ```
